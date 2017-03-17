@@ -13,6 +13,7 @@
 \usepackage{booktabs}
 \usepackage{url}
 
+
 % Custom AAS macros:
 \usepackage{aas_macros}
 
@@ -22,6 +23,9 @@
 
 % Algorithms:
 \usepackage{algorithmic,algorithm}
+
+% Overlap images
+\usepackage{overpic}
 
 % Commands:
 
@@ -53,6 +57,7 @@
 \newcommand{\tablabel}[1]{\label{\chapid:tab:#1}}
 
 \renewcommand{\eqref}[1]{\ref{\chapid:eq:#1}}
+\newcommand{\eqrefp}[1]{(\ref{\chapid:eq:#1})}
 \newcommand{\Eq}[1]{Equation~(\eqref{#1})}
 \newcommand{\eq}[1]{\Eq{#1}}
 \newcommand{\eqalt}[1]{Equation~\eqref{#1}}
@@ -81,10 +86,30 @@
 \newcommand{\dfmtodo}[1]{\todo{DFM}{red}{#1}}
 
 % Math:
-\newcommand{\dd}{\ensuremath{\,\mathrm{d}}}
+\newcommand{\dd}{\ensuremath{\mathrm{d}}}
 \newcommand{\bvec}[1]{{\ensuremath{\boldsymbol{#1}}}}
 \newcommand{\paramvector}[1]{\bvec{#1}}
 \newcommand{\unit}[1]{\mathrm{#1}}
+
+\newcommand{\al}{\alpha}
+\newcommand{\be}{\beta}
+\newcommand{\gam}{\gamma}
+\newcommand{\Gam}{\Gamma}
+\newcommand{\de}{\delta}
+\newcommand{\De}{\Delta}
+\newcommand{\eps}{\epsilon}
+\newcommand{\sig}{\sigma}
+\newcommand{\Sig}{\Sigma}
+\newcommand{\ka}{\kappa}
+\newcommand{\lam}{\lambda}
+\newcommand{\om}{\omega}
+\newcommand{\Om}{\Omega}
+
+\newcommand{\Mach}{\mathcal{M}}
+\newcommand{\pd}{\partial}
+
+\newcommand{\OO}{\mathcal{O}}
+
 
 % Probabilities:
 \newcommand{\like}{\mathscr{L}}

@@ -1,44 +1,410 @@
 \renewcommand{\chapid}{scalefit}
 
 % Chapter specific commands:
-\newcommand{\thisplain}{scalefit}
-\newcommand{\this}{\project{\thisplain}}
-\newcommand{\license}{MIT License}
-\newcommand{\Python}{\project{Python}}
-\newcommand{\numpy}{\project{numpy}}
-\newcommand{\Ubuntu}{\project{Ubuntu}}
-\newcommand{\github}{\project{GitHub}}
-\newcommand{\pip}{\project{pip}}
-\newcommand{\acor}{\project{acor}}
-\defcitealias{Goodman:2010}{GW10}
+
+\newcommand{\scalefit}{{\texttt{ScaleFit}}}
+\newcommand{\boxfit}{{\texttt{BoxFit}}}
+\newcommand{\ramcode}{{\texttt{RAM}}}
+\newcommand{\blastcode}{{\texttt{BLAST}}}
+\newcommand{\swift}{{\it Swift}}
+\newcommand{\swiftXRT}{{\it Swift-XRT}}
+\newcommand{\XRT}{{\it XRT}}
+\newcommand{\vela}{{\it Vela}}
+\newcommand{\bepposax}{{\it BeppoSAX}}
+\newcommand{\chandra}{{\it Chandra}}
+\newcommand{\ram}{{\texttt{RAM}}}
+\newcommand{\emcee}{{\texttt{emcee}}}
+\newcommand{\multinest}{\texttt{MultiNest}}
+\newcommand{\afterglowlibrary}{{\texttt{http://cosmo.nyu.edu/afterglowlibrary/}}}
 
 % Math:
-\newcommand{\model}{\ensuremath{\vector{\Theta}}}
-\newcommand{\data}{\ensuremath{\vector{D}}}
-\newcommand{\nuisance}{\ensuremath{\vector{\alpha}}}
-\newcommand{\link}{\ensuremath{X}}
-\newcommand{\ensemble}{S}
-\newcommand{\colorens}[1]{\ensemble^{(#1)}}
-\newcommand{\red}{\colorens{0}}
-\newcommand{\blue}{\colorens{1}}
-\renewcommand{\vector}[1]{#1}
-\renewcommand{\matrix}[1]{#1}
 
-\chapter{\this: Scalefit \chaplabel{scalefit}}
+\newcommand{\ddl}{d_{L,28}}
+\newcommand{\Eiso}{E_{iso}}
+\newcommand{\Edl}{E_{iso, 53}}
+\newcommand{\ndl}{n_{0, 0}}
+\newcommand{\thO}{\theta_0}
+\newcommand{\thobs}{\theta_{obs}}
+\newcommand{\epse}{\epsilon_e}
+\newcommand{\epsB}{\epsilon_B}
+\newcommand{\xN}{\xi_N}
+\newcommand{\tobs}{t_{obs}}
+\newcommand{\Fp}{F_{peak}}
+\newcommand{\cf}{\mathfrak{f}}
+\newcommand{\cfp}{\cf_{peak}}
+\newcommand{\cfm}{\cf_{m}}
+\newcommand{\cfc}{\cf_{c}}
+\chapter{Scalefit \chaplabel{scalefit}}
 
-%This \paper\ is joint work with David~W.~Hogg (NYU), Jonathan~Goodman (NYU),
-%and Dustin~Lang (Princeton/CMU) published in \emph{Publications of the
-%Astronomical Society of the Pacific} as \citet{Foreman-Mackey:2013}.
-Stuff
+This \paper is joint work with Hendrik van Eerten (Bath), Andrew MacFadyen (NYU), and Bin-Bin Zhang (University of Alabama) published in \emph{The Astrophysical Journal} as \citet{Ryan15}.
 
 \section{Chapter abstract}
 
-abs abs
+We constrain the jet opening angle and, for the first time, the off-axis observer angle for gamma-ray bursts in the \swiftXRT{} catalogue by using the \scalefit{} package to fit afterglow light curves directly to hydrodynamic simulations.
+The \scalefit{} model uses scaling relations in the hydrodynamic and radiation equations to compute synthetic light curves directly from a set of high resolution two-dimensional relativistic blast wave simulations.  The data sample consists of all \swiftXRT{} afterglows from 2005 to 2012 with sufficient coverage and a known redshift, 226 bursts in total.  We find the jet half-opening angle varies widely but is commonly less than 0.1 radians.  The distribution of the electron spectral index is also broad, with a median at $2.30$. 
+We find the observer angle to have a median value of 0.57 of the jet opening angle over our sample, which has profound consequences for the predicted rate of observed jet breaks and affects the beaming corrected total energies of gamma-ray bursts.
+
+%%%%%%%%%
+% Introduction  %
+%%%%%%%%%
 
 \section{Introduction}
 
-intro
 
-\section{Stuff}
+Gamma-ray bursts (GRBs) are intense flashes of gamma-rays believed to be caused by collapsing massive stars and merging compact binaries \citep{Woosley93, MacFadyen99, Eichler89}.  First observed by the \vela{} satellites in 1969, GRBs occur isotropically in the sky and persist for as long as several minutes or as short as fractions of a second \citep{Klebesadel73}.  In 1997 the \bepposax{} satellite detected a faint, decaying X-ray signal from GRB 970228 following the gamma-ray emission \citep{Costa97}.  Dubbed the GRB \emph{afterglow}, similar emission was detected in several subsequent GRBs.  Optical components to the afterglow were soon observed \citep{Groot97}.  Spectra from these optical components allow redshifts to be determined, which place the progenitors of GRBs at cosmological distances from Earth \citep{Metzger97}.  
 
-stuff
+The short timescale of a GRB indicates the radiation most likely is emitted by a compact object, such as a collapsing stellar core or merging neutron star binary.  If the progenitor were to radiate isotropically, it would have to radiate away a significant amount of its rest-mass energy to be visible from Earth.  Given the required radiative efficiency of such a process, this seems extremely unlikely.  Rather the radiation is most likely emitted in a collimated fashion; as a jet directed towards Earth.  The afterglow arises when the jet begins to propagate into the medium surrounding the burst (the circumburst medium).  The subsequent expansion into the cold surrounding gas creates a relativistic blast wave propagating out from the progenitor.  Electrons in the gas emit synchrotron radiation as they are accelerated by the magnetic fields in the forward shock.  Relativistic beaming collimates the radiation in the direction of jet propagation, which is observed on Earth as the afterglow.  The early afterglow is visible across the electromagnetic spectrum, from radio to X-ray.  As the blast wave expands and cools over the course of months the higher frequencies fade away, radio emission can continue for a year after the burst until it too drops below observational sensitivity.  This basic afterglow picture was first outlined in the fireball model \citep{Rees92}, but is a natural consequence of any GRB engine which deposits sufficient energy into the circumburst medium.  Although the precise mechanics of GRB engines are still uncertain, the relatively simpler physics of afterglows opens them up to direct simulation and analysis.
+
+The relativistic jet-like nature of the blast wave leads to some immediate geometric conclusions.  At early emission times, only a small patch on the leading edge of the blast wave is visible.  As time goes on, more and more of the blast wave becomes visible to the observer.  This effect slows the temporal decay of the afterglow.  However, after a long enough time, the entire blast wave becomes visible, and the afterglow will decay faster.  Further steepening of the afterglow light curve is caused by hydrodynamic spreading of the blast wave as it decelerates.  The steepening due to these processes is called the \emph{jet-break}, and is an ubiquitous effect of relativistic collimated emission.  Current observations of afterglow light curves see far fewer jet-breaks than expected, this is known as the missing jet-break problem \citep{Sato07,Liang08, Kocevski08, Racusin09}.
+
+The jet orientations are randomly distributed for cosmologically distant sources such as GRBs. \citet{vanEer10offaxis, vanEer11} show that observing an afterglow from an observer angle comparable to the jet opening angle, as opposed to straight-on, can smear out the jet-break and delay the full transition until after \swift{} ceases observations. This provides a plausible resolution to the missing jet-break problem.  A sufficiently detailed model capable of predicting distinct light curves for off-axis observers should, in principle, allow the observer angle $\thobs$, the direction of the outflow relative to Earth, to be measured from afterglow data. With enough data, this information can be used to revise predictions for the rate of jet-breaks observed by \swift{} (or other instruments), by revealing the extent to which observational biases will alter the intrinsic random distribution of source directions.
+
+The hydrodynamics of a collimated outflow are inherently multi dimensional.  Calculating an afterglow light curve from basic physical parameters of the blast (such as the explosion energy, opening angle, and observer angle) requires numerical simulation since there is no known exact solution to the two-dimensional blast wave.  However, since state-of-the-art numerical simulations typically take days to run, using them directly in the analysis of data usually requires either approximations or significant amounts of computer time.  The \boxfit{} package addressed this problem with a two-fold approach \citep{vanEer12boxfit}.  Using the scale-invariance between blast energies and circumburst medium densities, fully time dependent hydrodynamical data can be generated for arbitrary values of these parameters from only a single hydrodynamics simulation.  Strong compression of the simulation output allow for data from a large sample of opening angles to be loaded into memory simultaneously.  \boxfit{} is able to generate light curves on the fly by only running a radiative transfer code using the compressed hydrodynamics data, reducing the generation time from days to seconds.  The \scalefit{} analysis code \citep[][in prep]{vanEer14scalefit} used in this work goes a step further, making use of scaling relations in the radiation equations to generate light curves directly from a precomputed table of spectral parameters \citep{vanEer12scale}.  Using \scalefit{}, an afterglow light curve can be generated directly from high resolution simulations in milliseconds. 
+
+We make use of the speed up to perform a Markov chain Monte Carlo (MCMC) curve fitting procedure on a large sample of afterglows observed by the \swift{} X-Ray Telescope (\swiftXRT{}).  The procedure to fit a single burst requires about ten million light curves to be generated with distinct parameters, and takes a couple of hours on a standard workstation.  Any detailed model with multiple parameters is likely to exhibit degeneracies between parameters when performing a fit in only a single band.  Degenerate parameters exhibit high correlations with each other but are individually unconstrained by the data.  An advantage of the Bayesian MCMC approach is the ability to treat degeneracies as \emph{nuisance parameters}.  Nuisance parameters may be marginalized over, incorporating their uncertainties into a probability distribution for only the parameters of interest.  To efficiently sample the parameter space we use the parallel tempered affine invariant ensemble sampler \citep{Goodman10} implemented by the \emcee{} package \citep{emcee}.  While our final results leave several model parameters unconstrained, this uncertainty is folded into the estimates for the parameters we can constrain well: the jet half opening angle $\thO$, the off-axis observer angle $\thobs$, and the electron spectral index $p$.  Details of the \scalefit{} model, its implementation, and a public release of the code will be given in a forthcoming paper \citep[][in prep]{vanEer14scalefit}.  This paper focuses on the results of using \scalefit{} on the \swiftXRT{} dataset.  
+
+In section 2 we give an overview of the \scalefit{} afterglow model and the simulations upon which its based.  Section 3 discusses the \swiftXRT{} data sample, and section 4 details the specific analysis we perform.  We find bursts exhibit a wide range of opening angles, but most commonly have a half-opening angle $\thO < 0.1$ rad.  The distribution of electron spectral index $p$ favours $p\sim2.3$.  The off-axis observer angle tends to be around 0.6 of the half opening angle.  The results are summarized in section 5 and discussed in section 6, with specific fit results given in the appendix.  A subset of these results were presented in \cite{Ryan13}.
+
+%%%%%
+%Section 2 - Model
+%%%%%
+
+\section{The Model}
+
+The \scalefit{} GRB afterglow model uses a series of high resolution hydrodynamic simulations to calculate the time evolution of the afterglow spectral parameters.  From these parameters we extract a set of scale-invariant characteristic quantities.  The characteristic quantities depend only on $\thO$, the opening angle of the jet producing the afterglow, $\thobs$, the angle at which the observer is off-axis (the observer angle), and observer time.  Furthermore, the full set of spectral parameters depend on the characteristic quantities only through simple scaling laws \citep{vanEer12scale}.  Given the time evolution of the characteristic quantities computed from high resolution hydrodynamics simulations, this allows one to calculate the light curve for an arbitrary GRB afterglow almost instantaneously.
+
+This study assumes a particular initial condition of the jet, one with no initial angular structure.  Under this assumption, the hydrodynamics of the jet can be fully parameterized by the isotropic equivalent energy $\Eiso$, the circumburst density $n_0$, and the jet half opening angle $\thO$.  The isotropic equivalent energy is the total kinetic and thermal energy of a spherical blast wave with the same radial profile as the jet.  It is related to the total jet energy $E_{jet}$ via $E_{jet} = (1-\cos \thO)\Eiso$.  The circumburst density $n_0$ is related to the circumburst mass density via $\rho_0 = m_p n_0$.
+
+We employ a synchrotron model for the afterglow radiation and model the spectrum as a series of connected power laws with spectral index $p$ \citep{Sari98}:
+\begin{align} \eqlabel{spectrum}
+	F_{fast}(\nu) &= \Fp \left \{ \begin{matrix}  \left(\nu / \nu_c\right)^\frac{1}{3} & \nu < \nu_c < \nu_m \\
+								 \left(\nu / \nu_c\right)^{-\frac{1}{2}} & \nu_c < \nu < \nu_m \\
+								 \left(\nu_m / \nu_c\right)^{-\frac{1}{2}} \left( \nu / \nu_m \right)^{-\frac{p}{2}} & \nu_c < \nu_m < \nu  \end{matrix}  \right . \ ,  \\
+	F_{slow}(\nu) &= \Fp \left \{ \begin{matrix}  \left(\nu / \nu_m\right)^\frac{1}{3} & \nu < \nu_m < \nu_c \\
+								\left(\nu / \nu_m\right)^{\frac{1-p}{2}} & \nu_m < \nu < \nu_c \\
+								\left(\nu_c / \nu_m\right)^{\frac{1-p}{2}} \left( \nu / \nu_c \right)^{-\frac{p}{2}} & \nu_m < \nu_c < \nu \end{matrix}  \right . \ .
+\end{align}
+$F_{fast}$ ($F_{slow}$) refers to the fast-cooling (slow-cooling) regime where $\nu_c < \nu_m$ ($\nu_m < \nu_c$).  In this work we disregard self-absorption as the characteristic frequency $\nu_a$ lies well below the X-ray band observed by the \swiftXRT{}.  Each of the parameters $\Fp$, $\nu_m$, and $\nu_c$ will vary with time and observer location.  The observer is located at an angle $\thobs$ off-axis at a luminosity distance $d_L$ and redshift $z$.  Furthermore the dynamics of the synchrotron radiation are parameterized by the fraction of thermal energy in electrons $\epse$, the fraction of the thermal energy in the magnetic field $\epsB$, and the fraction of electrons accelerated by the shock $\xN$.  The dependence of the synchrotron spectrum on these parameters is given by simple scaling relations \citep{vanEer12scale}.  \scalefit{} currently assumes a homogenous circumburst medium and a global cooling time (extensions are under development).  Throughout we use dimensionless measures of distance $\ddl \equiv d_L / 10^{28} $cm, energy $\Edl \equiv \Eiso / 10^{53}$erg, and circumburst density $\ndl \equiv n_0/1\ $cm$^{-3}$.  First we rescale observer time $\tobs$ since the GRB trigger as:
+ \begin{equation}\eqlabel{rescale}
+	\tau \equiv \left( \frac{\ndl}{\Edl}\right)^{1/3} \frac{t_{obs}}{1+z} \ .  
+\end{equation}
+Then the scaling relations are given by:
+\begin{align} \eqlabel{scaling}
+	\Fp =& \frac{1+z}{\ddl^2}\frac{p-1}{3p-1} \Edl \  \ndl^{1/2} \epsB^{1/2} \xN \ \cfp(\tau; \thO, \thobs) \ , \nonumber \\
+	\nu_m =& \frac{1}{1+z}\left(\frac{p-2}{p-1}\right)^2   \ndl^{1/2} \ \epse^2 \ \epsB^{1/2} \xN^{-2} \ \cfm(\tau; \thO, \thobs) \ , \nonumber \\
+	\nu_c =& \frac{1}{1+z} \Edl^{-2/3}  \ndl^{-5/6} \epsB^{-3/2} \ \cfc(\tau; \thO, \thobs) \ .  
+\end{align}
+\eq{scaling} defines the characteristic functions $\cfp$, $\cfm$, and $\cfc$ which encode the dependence of the light curve $F_\nu(\tobs)$ on $\thO$, $\thobs$, and $\tau$.  These functions contain all the dynamic behaviour of the light curve.  Unfortunately $\cfp$, $\cfm$, and $\cfc$ do not have simple closed form expressions.  However, being only functions of time and two other parameters, they can easily be tabulated from simulations.  Given these tables, we have a fully physical model for all possible afterglow light curves in an interstellar medium (ISM) environment.  With Equations (\eqrefp{spectrum}-\eqrefp{scaling}), one can determine $F_\nu(\tobs)$ by just specifying the parameters:
+\begin{equation}
+	\left \{  z, d_L, \Eiso, n_0, \thO, \thobs, p, \epse, \epsB, \xN \right \} \ .
+\end{equation}
+Without the scaling relations \eqrefp{scaling} this would be a Herculean task, as the space of all possible light curves is (in this model) ten dimensional and would be impossible to sample at any meaningful resolution.
+
+The current version of \scalefit{} uses the \boxfit{} simulations to calculate $\cfp$, $\cfm$, and $\cfc$ \citep{vanEer12boxfit}.  These are a series of 19 two-dimensional relativistic hydrodynamic simulations performed using adaptive mesh refinement (AMR) with the \ramcode{} code \citep{Zhang06, Zhang09}.  Each simulation calculates the time evolution of an axisymmetric relativistic jet with a particular $\thO \in [0.045, 0.5]$ rad.  The initial condition is taken to be a blast wave with a Blandford-McKee (BM) radial profile \citep{Blandford76}.  The circumburst medium has a uniform density $n_0$, and the BM solution is truncated at angle $\thO$ to provide the conical shape of the outflow.  This is consistent with the notion that at early times the outflow is ultra-relativistic and essentially radial.  As a consequence of beginning with a BM solution, our temporal coverage of $\cfp$, $\cfm$, and $\cfc$ only begins at the deceleration phase, after energy injection, plateaus, and (most) flaring has completed.  This affects what ranges of data we can reasonably expect to fit, and is discussed further in Section 3. 
+
+ In this study we only consider uniform density (ISM) environments.  Although massive stars are expected to have a wind like environment ($n\sim r^{-2}$) studies have found a large number of GRBs are better fit by an ISM \citep[e.g.][]{Racusin09,Curran11,Panaitescu01,Panaitescu02,Cenko11}.  We take this as sufficient evidence to warrant an ISM only approach as an initial study.
+
+For typical values of $\epse$, $\epsB$, and $\xN$ the radiation does not significantly affect the dynamics of the blast wave.  Following this assumption we calculate light curves from a particular blast wave by post-processing the simulation results through a linear radiative transfer code \blastcode{} \citep{vanEer09, vanEer10transrel}. We interpolate simulation snapshots from the 19 values of $\thO$ to create snapshots for a total of one hundred $\thO$ values in $[0.045, 0.5]$ rad.  Each of these gets processed through \blastcode{} to produce a light curve $F_\nu(\tau)$ for one hundred observer angles $\thobs$.  From each light curve we extract the values of $\cfp$, $\cfm$, and $\cfc$ at one hundred values of $\tau$.  The result is three $100\!\times\!100\!\times\!100$ double-precision tables which can be used to construct arbitrary post-plateau afterglow light curves.
+
+To construct a light curve given a set of parameters, \scalefit{} simply looks up the time series for $\cfp$, $\cfm$, and $\cfc$ at the appropriate $\thO$ and $\thobs$, applies the scaling relations \eqrefp{scaling} to produce time series for $\Fp$, $\nu_m$, and $\nu_c$, and calculates the corresponding flux using the spectrum \eqrefp{spectrum}.  We allow the times series for $\cfp$, $\cfm$, and $\cfc$ to be extrapolated at most one order of magnitude in $\tau$ outside the calculated tables.  Extrapolation is performed by maintaining the power-law slope of the last two entries within the tables.  The entire process takes about a millisecond to complete, allowing GRB afterglow fitting algorithms run on a laptop to generate light curves from high resolution simulations.
+
+%Include plot of f_p, f_m, and f_c?
+
+%%%%%
+%Section 3 - Data
+%%%%%
+
+
+\section{The Data}
+
+The \swift{} observatory was launched in 2004 \citep{SWIFT}, began taking data almost immediately and continues as of this writing.  Its ability to rapidly slew towards targets allows it to cover far more GRBs at much earlier times than any other telescope.  Since X-ray afterglows have been observed for vast majority of GRBs, the \swiftXRT{} catalogue is the most complete collection of afterglow light curves currently available.  This study includes \swiftXRT{} afterglows detected from 2005 to 2012 inclusive.  We obtained all light curve data from the UK Swift Science Data Centre (UKSSDC) \swiftXRT{} GRB light curve repository \citep{SWIFTonline, SWIFTauto}.  To reduce the dimensionality of the fit, we restrict our analysis to the 264 afterglows from this timespan observed by the \swiftXRT{} with a determined spectroscopic redshift.\footnote{\label{ft:z} Redshifts were obtained from the catalogues maintained by Dan Perley \texttt{http://www.astro.caltech.edu/grbox/grbox.php} and Jochen Greiner \texttt{http://www.mpe.mpg.de/\textasciitilde jcg/grbgen.html}.}
+
+We use the count-rate light curve produced by the UKSSDC group for our analysis.  This light curve consists of time-binned photon counts from the \swiftXRT{} with associated uncertainties and is automatically generated for the repository.    Our data points consist of time, flux pairs $(t_i, F_i)$ obtained from the count-rate light curve.  The binning procedure to produce count rates is dynamic, bin sizes are adjusted as the count-rate varies, and automatic.  The specific parameters have been tuned to provide reliable results for almost all GRBs, although they may not be optimal in some individual cases.  To convert the count rates to fluxes we employ the Counts-to-flux (unabs) conversion factors supplied in the catalogue entry for each afterglow.  These factors are the product of an automatic analysis, which uses the spectrum of observed photons and models for detector response and galactic extinction to infer the intrinsic flux associated with a single photon count \citep{SWIFTauto}.  We assume the uncertainty in this factor is small compared with the uncertainty in the count rate, and so calculate both the intrinsic flux and its uncertainty as the product of the count rate values with the Counts-to-flux factor.  
+
+Our afterglow model does not include energy injection, pre-deceleration stage ejecta, or other effects which show themselves in the early time light curve.  By beginning the simulations with an impulsive energy injection Blandford-Mckee profile, we are deliberately modelling the afterglow only after such effects have died out.  Specifically, we note that if either $\nu_m$ or $\nu_c$ lies below the frequency of interest, which is true for the majority of physically relevant parameter space in the $0.3-10.0$ keV band of the \XRT{}, the shallowest temporal power law slope $s$ (in the sense $F \sim t^s$) of our model is $-1/4$ \citep{Sari98}. This slope decays monotonically with time.
+
+We trim the \swiftXRT{} data to ensure we only perform the analysis in the regime where the model applies.  Using the best-fit broken power law provided by the UKSSDC \XRT{} catalogue, we remove all segments until the start of a monotonic decay with power-law slope less than $-1/4$ \citep{SWIFTauto}.  Flares identified in the catalogue entry are also cut out.  This procedure is demonstrated in \fig{trim} for GRB 100621A.
+
+\begin{figure}
+\begin{center}
+ \includegraphics[width=0.8\textwidth]{figures/scalefit/data_trim.pdf}
+ \end{center}
+	\caption{\figlabel{trim}  The data trimming procedure demonstrated for GRB 100621A.  Blue data are kept for the fit, while red data are removed.  The best-fit power law is obtained from the \swiftXRT{} catalogue.  The last three segments of the power law undergo monotonic decay, but the only the last two are kept because we require the slope must be less than $-1/4$.  Flares (shaded rectangles) are cut out if they occur during the monotonic decay. }
+\end{figure}
+
+We use the Counts-to-flux conversion factor calculated calculated separately for each power law segment of the light curve.  In principle this could include data obtained in either Windowed Timing (WT) or Photon Counting (PC) modes of the \swiftXRT{}, but in practice our trimming leaves only PC mode data for the analysis.  The Counts-to-flux conversion factors are calculated from a spectral fit over the entire power-law segment and hence are time-averaged.  Since the spectrum of X-ray afterglows tends not to evolve after the steep decay, these time-averaged values should be sufficient for our analysis. 
+
+It is possible after these cuts some light curves may have an insufficient number of data points to perform a seven-dimensional fit.  Our last requirement on the data is that a light curve have at least 3 degrees of freedom (ie. 11 data points in a 7 parameter fit) to attempt the analysis.  After all cuts were applied 226 light curves had a sufficient number of data points, on average 109 per burst.  These bursts form the sample for our study.
+
+%%%%%
+%Section 4 - Analysis
+%%%%%
+
+
+\section{The Analysis}
+
+Our afterglow model has ten parameters, which we refer to collectively as $\Theta$:
+\begin{equation}
+	\Theta \equiv \left \{  z, d_L, \Eiso, n_0, \thO, \thobs, p, \epse, \epsB, \xN \right \} \ .
+\end{equation}
+We employ a Markov-Chain Monte Carlo (MCMC) approach to fit each light curve $D$ in our sample to the model.  The MCMC algorithm generates samples of the posterior probability distribution $p(\Theta | D)$, the probability distribution of the parameters $\Theta$ given the light curve data $D$.  This approach gives more information about the global structure of the posterior than a standard $\chi^2$ minimization, providing very accurate information about the uncertainties in the inferred values of any parameter or set of parameters.
+
+Generating light curves from scaling laws can create degeneracies between parameters if the data lies entirely in a single spectral regime (eg. fast cooling with $\nu > \nu_m$).  Additionally, a degeneracy exists between $\epse$, $\epsB$, and $\xN$ \citep{Eichler05}.  The degenerate parameters may vary over several orders of magnitude but will produce identical light curves if certain ratios between the parameters remain fixed.  Degenerate parameters will be left unconstrained in the final analysis.  The uncertainty in these parameters will be incorporated into our estimates for non-degenerate parameters through marginalization: integrating the posterior over these \emph{nuisance parameters}.
+
+The posterior $p(\Theta | D) $ is calculated from the likelihood $p(D | \Theta)$ and the prior $p(\Theta)$ via Bayes' Theorem:
+\begin{equation}\eqlabel{bayes}
+	p(\Theta | D) \propto p(\Theta) p(D | \Theta) \ .
+\end{equation}
+The proportionality constant in \eqrefp{bayes} accounts for normalization, and is irrelevant in the MCMC analysis.  Assuming the data points ($t_i,F_i$) are mutually independent with gaussian uncertainties $\sig_i$, we can write the likelihood as a standard $\chi^2$:
+\begin{align} \eqlabel{likelihood}
+	p(D|\Theta) &\propto \exp\left(-\frac{1}{2} \chi^2 \right) \ ,\nonumber \\
+    \chi^2 &= \sum_{i} \left(\frac{F_i - F_{model}(t_i; \Theta)}{\sig_i}\right)^2 \ , 
+\end{align}
+where $F_{model}(t_i, \Theta)$ is the flux calculated from our model at time $t_i$ with parameters $\Theta$, integrated over the \swiftXRT{} spectral band $0.3 - 10.0$ keV.  The assumption of gaussian uncertainties is valid for sufficiently high photon counts per flux measurement $F_i$.  The UKSSDC \XRT{} light curve bins maintains at least 15 photon counts for each $F_i$, we take this to be sufficient for Gaussian uncertainties \citep{SWIFTauto}.  
+
+The prior $p(\Theta)$ is used to constrain and fix the parameters of the fit using prior knowledge of the data and model.  To reduce the dimension of the fit we fix $z$, $d_L$, and $\xN$.   The redshift $z$ is fixed to the current measured value (see footnote \ref{ft:z}).  The luminosity distance $d_L$ is calculated from $z$ using a benchmark $\Lambda CDM$ cosmology with $H_0 = 71\text{km}\ \text{s}^{-1} \text{Mpc}^{-1}$ and $\Omega_m = 0.27$.  There is a well known degeneracy in our formulation between $\epse$, $\epsB$, and $\xN$, to resolve this we fix $\xN = 1$ for all afterglows.
+
+Some transformations are performed on the free parameters in $\Theta$ to improve performance.  The dimensionfull parameters $\Eiso$ and $n_0$ are made dimensionless via \eqrefp{rescale}, parameters which may vary over several orders of magnitude are put on a log-scale, and $\thobs$ is measured as a fraction of $\thO$ (conforming to the organization of the tables).  These transformed parameters, $\Theta_{fit}$, are directly used in the MCMC routine.
+\begin{align}
+    \Theta_{fit} \equiv& \left \{  \log_{10} \Edl, \ \log_{10} \ndl, \ \thO, \ \thobs  / \thO, \right . \nonumber \\
+    &\qquad \left . p, \ \log_{10} \epse, \ \log_{10} \epsB \right \} \ .
+\end{align}
+The prior on each of these parameters is uniform within certain bounds given in \tab{bounds}.  The bounds on $\Edl$, $\ndl$, $\epse$, and $\epsB$ were chosen to contain the phenomenologically interesting regions of parameter space while eliminating unphysical regions.  The bounds on $\thO$ reflect that our numerical model is based entirely on the simulations presented in \cite{vanEer12boxfit}, which were only performed for $\thO < 0.5$ rad. The full release of \scalefit{} will include opening angles up to $\pi/2$ rad.  The upper bound $\thobs/\thO<1$ encodes that we must lie within the cone of the jet to observe the prompt emission.  The lower bound on $p$ is mathematically necessary for this parameterization, as $p<2$ would require an additional cut-off parameter on the accelerated particle distribution to prevent the total energy from being divergent \citep[see e.g. discussions in][]{Granot02, vanEer13review}. The upper bound was chosen to be high enough to contain the physically likely values.
+
+In code tests, we found fits were not very sensitive to the overall scale of the light curve.  Raising or lowering all the flux values by 20\% did not induce significant changes in our conclusions.  This is a benefit, as it means our analysis are somewhat insensitive to the exact value of Counts-to-flux used, particularly to the specifics of accounting for galactic and extragalactic hydrogen absorption.
+%{\bf  Our tests did not include spectral evolution, which can alter the time dependence of Counts-to-flux.  Observations indicate {\bf X-ray} afterglows do not undergo strong spectral evolution on the time scales we are investigating.}
+
+\begin{table}
+\begin{center}
+\begin{tabular}{ccc}
+a & b & c
+\end{tabular}
+\end{center}
+\caption{Priors for parameters in $\Theta$. \tablabel{bounds}}
+\end{table}
+
+%\begin{deluxetable}{cc}
+%\tablecaption{Priors for parameters in $\Theta$. \tablabel{bounds}}
+%\tablewidth{0pt}
+%\tablehead{\colhead{Parameter} & \colhead{Prior}}
+%\startdata
+%$z$ & Fixed by catalogue \\[2pt]
+%$\ddl$ & Fixed by $z$ and cosmology\tablenotemark{a} \\[2pt]
+%$\log_{10} \Edl$ & $[-10.0,3.0]$  \\[2pt]
+%$\log_{10} \ndl$ & $[-5.0,5.0]$ \\[2pt]
+%$\thO $& $[0.045,0.5]$ \\[2pt]
+% $\thobs / \thO$ & $[0.0,1.0]$ \\[2pt]
+%$p$ & $[2.0, 5.0]$ \\[2pt]
+% $\log_{10} \epse$ & [-10.0, 0.0] \\[2pt]
+%$\log_{10} \epsB$ & [-10.0, 0.0] \\[2pt]
+%$\xN$ & Fixed at $1.0$ 
+%\enddata
+%\tablenotetext{a}{We use a benchmark $\Lambda$CDM cosmology with $H_0 = 71\text{km}\ \text{s}^{-1} \text{Mpc}^{-1}$ and $\Omega_m = 0.27$.}
+%\tablecomments{Parameters which are not fixed are given a uniform prior within the bounds above.}
+%\end{deluxetable}
+
+The MCMC analysis is performed using the parallel-tempered affine-invariant ensemble sampler implemented by the \emcee{} python package.  This algorithm uses an ensemble of ``walkers'' moving simultaneously through parameter space instead of the standard single walker approach (e.g. Metropolis-Hastings).  The use of the ensemble allows the method to be affine-invariant: affine transformations of the distribution do not affect the efficiency of the sampling.  Strong linear correlations between parameters are sampled with the same quality as uncorrelated parameters, a difficult problem for traditional samplers.  
+
+Parallel tempering is a technique used to better sample multimodal distributions (\citet{Swendsen86, Geyer91}, see \citet{Earl05} for a review).  Several ensembles are run simultaneously on likelihoods $p(D|\Theta)^{1/T}$, where $T$ is the temperature.  The lowest temperature ensemble $T=1$ samples the true posterior, while hotter ensembles sample distributions which more closely resemble the prior and hence are less restricted in their movements.  The ensembles are coupled by allowing walkers to swap between them with some probability every iteration.  This allows walkers to mix between distant modes, allowing efficient sampling of multimodal distributions.  Parallel tempering is tuned by the choice of temperature ladder: the temperature of each ensemble.  We use the default ladder provided with \emcee{}: a geometric sequence of user set length and growth factor tuned to optimally sample an n-dimensional gaussian.  Only samples from the true distribution ($T=1$) are used in the analysis.
+
+For reasonable parameter values in our ISM model both $\nu_m$ and $\nu_c$ lie below the \swiftXRT{} band at late times.  As such, a large number of X-ray light curves generated by \scalefit{} will exist in only a single spectral regime.  In this case the scaling relations used to calculate the flux will create a large degeneracy between $\Eiso$, $n_0$, $\epse$, and $\epsB$, leading to high correlations between these parameters.  Affine-invariance is thus a highly beneficial property of the sampler for this analysis.
+
+Each afterglow was sampled with 20 temperature levels and 100 walkers per level, centered in a small ball around the reference point in phase space:
+\begin{equation}\eqlabel{init}
+	\Theta_{fit, 0} = \{0.0, \ 0.0,\  0.2, \ 0.5,\  2.5, -1.0, -2.0\} \ .
+\end{equation}
+Walkers were initialized with uniform random values within 2\% of \eqrefp{init} in each non-zero reference value, and within $\pm 0.02$ if the reference value was zero.  There currently does not exist any unbiased method for determining the convergence of an MCMC chain.  As such we employed a pragmatic view for determining the ``burn-in'' and running lengths of the chain.  Initial tests indicated the autocorrelation time of the chain to be approximately 1000 iterations, depending on the parameter.  Based on this we chose a burn-in of 7000 iterations, to ensure several autocorrelation times between the initial condition and the recording of samples.  Sampling was performed for 3000 iterations after burn-in, generating altogether 300 000 samples of $p(\Theta_{fit} | D)$ for each burst.
+
+For each burst the final values of the fit parameters are inferred from their marginalized posteriors (eg. $p(\thobs |D)$) estimated by the MCMC generated samples.  The marginalization incorporates the uncertainties in all other fit parameters.  Our estimate for each parameter is the median of the posterior, with uncertainty given by the $68\%$ quantiles.  We use the median (instead of the mean or mode for instance) because it is less sensitive to the tails of the distribution and it is preserved under invertible mappings of the parameter (eg. $\log_{10} \epse \to \epse)$.
+
+%chi^2 on approximate gaussianness
+	
+We validated this analysis by performing fits on a set of synthetic data.  Using the \scalefit{} model we produced a set of 500 light curves with randomly distributed parameters $\Theta$ in the \swiftXRT{} 0.3-10.0 keV band, using the method from \citet{vanEer11}.  Data points were drawn from each light curve in a manner to resemble \swiftXRT{} data.  Occultation by the Earth was taken into account by only taking data in 48 minute intervals, and the fractional exposure of late-time afterglows was included by reducing the data rate by a factor of ten for $t_{obs} > 1$ day.  Fluxes were given random gaussian uncertainties (25\% for early time and 50 \% for late time).  Each of these synthetic light curves was subjected to our analysis using a single ensemble of 1500 walkers and no parallel tempering.    
+
+\begin{figure*}
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/scalefit/discrepancies.pdf}
+\end{center}
+	\caption{\figlabel{test} The discrepancy ($\sig$) between true and estimated values of $\Theta_{fit}$ in fits to synthetic data are shown in the black histograms.  A discrepancy $ \sig=\pm 1$ ($\pm 2$) indicates the true value lies on the 68\% (95\%) quantile of the estimate.  The blue curve shows the theoretical distribution of discrepancies: a gaussian normalized to the number of synthetic datasets with unit width.  The red curve and histogram shows the same distributions after cutting to ``well-fit'' curves (our definition of ``well-fit'' is introduced in Section 5).  These results were run with a single ensemble of 1500 walkers, no parallel tempering.}
+\end{figure*}
+
+\fig{test} shows the a histogram of discrepancies between the true and estimated values for $\Theta_{fit}$ for each synthetic afterglow.  Theoretically these distributions should be approximately Gaussian.  The tails of the distributions for $\Edl$, $\ndl$, and $\epse$ indicate this analysis may underestimate $\Edl$ and overestimate $\ndl$ and $\epse$.  Due to the degeneracies in these parameters when fitting only a single band, this is not entirely surprising.  The distribution of discrepancies for $\epsB$, $\thO$, $\thobs/\thO$, and $p$ agree with the expected Gaussian shape, indicating the analysis is at least internally consistent on these parameters.  We believe this is sufficient indication that \scalefit{} can provide good estimates of $\thO$, $\thobs / \thO$, $p$, and $\epsB$ when fitting single band X-ray afterglow light curves.  Further runs on the synthetic data demonstrated our results are not altered when fitting the spectral flux $F_\nu$, flux $F$, or fluence $\int F dt$.
+
+In testing it was discovered $p(\Theta_{fit}|D)$ may be strongly multi-modal, particularly when light curves are allowed to extrapolate outside the calculated tables for $\cfp$, $\cfm$, and $\cfp$.  In some cases, the multi-modality is strong enough that parallel tempering cannot adequately sample the distribution.  To minimize the effect of these cases we adopted the following heuristic.  Every light curve is fit twice, once allowing extrapolation (to a maximum of one order of magnitude in $\tau$) and once with no extrapolation.  The results we report are from the run that found the lowest $\chi^2$: the sample with highest likelihood.    
+
+A parallel effort has been performed using the same model theoretical model with an independent implementation \citep{Zhang14}.  This study focuses on a smaller number of bursts which were observed by both the \swiftXRT{} and \chandra{} and uses \multinest{} sampling for its analysis.  Both methods were tested during development for convergence, sensitivity to initial conditions, and behaviour with resolution.  The results were consistent between both analyses, demonstrating the robustness of the methods and providing a measure of independent validation.
+
+%%%%%
+%Section 5 - Results
+%%%%%
+
+\section{The Results}
+
+We ran the \scalefit{} analysis on all 188 afterglows in our sample.  \tab{results}, located in the Appendix, gives results for the non-degenerate parameters ($\thO, \thobs/\thO, p$).  The quality of the fits varied from burst to burst.  Some bursts had very sharp fits, most had a broad (ie. unconstrained) distribution in at least one of the parameters of interest.  A small minority of fits ($\lesssim10\%$) were unable to converge to an adequate light curve, with a best fit $\chi^2/dof \gg 1$.  Given the freedom in our model, we expect the afterglows in the latter category do not satisfy one or more of our base assumptions, perhaps that of a homogeneous ISM.
+
+The fit for GRB 110422A is shown in \fig{fit1}. It serves as an example of a particularly good fit.  The ``corner plot'' shows projections of $p(\Theta_{fit} | D)$ as determined by the MCMC samples.  Plots on the diagonal show the marginalized distributions for each individual parameter, while the off-diagonal plots show $p(\Theta_{fit} | D)$ marginalized over all but two parameters.  We see the distributions of $\Edl$, $\ndl$, $\epse$, and $\epsB$ are very broad, covering several orders of magnitude.  This of course is due to the model's degeneracy between these parameters, which induces a strong correlation between them. This correlation is exhibited in the off-diagonal plots for these parameters.  The energy and circumburst density ($\Edl$ and $\ndl$) are confined to narrow bands in phase space, while $\epse$ and $\epsB$ exhibit a multidimensional degeneracy.  This degeneracy does not affect the distributions of $\thO$, $\thobs/\thO$, or $p$, as can be seen from their plots on the diagonal.  Despite several other parameters being unconstrained, these parameters are determined quite well.  We find $\thO = 0.0733^{+0.011}_{-0.0098}$ rad, $\thobs/\thO = 0.676^{+0.035}_{-0.050}$, and $p=2.284^{+0.049}_{-0.06}$.  In particular, this afterglow was almost certainly observed off-axis.
+
+\begin{figure*}
+\begin{center}
+\begin{overpic}[width=\textwidth]{figures/scalefit/110422A_corner.pdf}
+	\put(46,60){\includegraphics[width=0.55\textwidth]{figures/scalefit/110422A_lightcurve.pdf}}
+\end{overpic}
+\end{center}
+\caption{Fit result for 110422A.  This ``corner plot'' shows all one dimensional (diagonal) and two dimensional (off-diagonal) projections of the posterior pdf.  The best-fit values (MAP, maximum posterior probability) are shown in blue.  Dotted lines mark the 16\%, 50\%, and 84\% quantiles of the marginalized posteriors for each parameter.  The best-fit light curve is shown against the data in the upper right. \figlabel{fit1}}
+\end{figure*}
+
+In general, the posterior distributions of $\Eiso$ and $n_0$ tend to be very broad or uniform, with a tight pairwise correlation between them.  The correlation is caused by the rescaling of $t_{obs}$ to $\tau$, which depends on the ratio $\Eiso/n_0$.  The radiation parameters $\epse$ and $\epsB$ tend to demonstrate a more multidimensional degeneracy with $\Eiso$, $n_0$, and each other.  These reflect the inherent degeneracy in our model when restricted to single band fits.  $\epsB$ is least constrained by most fits.  This is not unexpected as the overall dependence of the flux $F$ on $\epsB$ is very weak.  For example, above the cooling break $F_\nu \propto \epsB^{(p-2)/4} \approx \epsB^{0.05}$ using our median value of $p$.  We expect these difficulties to ease in multi-band fits.
+
+On the other hand $\thO$, $\thobs$, and especially $p$ are constrained well by several fits.  This is not surprising, as the dependence of the light curve on these parameters is not given by simple power-law scaling.  With these estimates for $\thO$, $\thobs$, and $p$ we can make some statements about the global distribution of these parameters amongst the \swiftXRT{} sample.  
+
+\begin{figure*}
+	\begin{center}
+	\begin{tabular}{cc}
+    		\includegraphics[width=0.45\textwidth]{figures/scalefit/distribution_Th0.pdf} & \includegraphics[width=0.45\textwidth]{figures/scalefit/distribution_cut_Th0.pdf}
+    	\end{tabular}
+    	\end{center}
+	\caption{\figlabel{thO} Distribution of $\thO$ across all afterglows in the sample. The black curve in the first figure shows the distribution of reported values of $\thO$ (eg. the median of the marginalized distribution for each light curve).  The red curve plots the same, including only bursts considered ``well-fit'' in $\thO$ and $\thobs$.  The second figure shows only the ``well-fit'' bursts, with the median (thick dashed) and  68\% quantile (thin dashed).}
+\end{figure*}
+
+\begin{figure*}
+\begin{center}
+	\begin{tabular}{cc}
+   		\includegraphics[width=0.45\textwidth]{figures/scalefit/distribution_ThObs.pdf} & \includegraphics[width=0.45\textwidth]{figures/scalefit/distribution_cut_ThObs.pdf}
+    	\end{tabular}
+    	\end{center}
+	\caption{\figlabel{thobs} Same as \fig{thO}, but for $\thobs / \thO$.}
+\end{figure*}
+
+\begin{figure*}
+	\begin{center}
+	\begin{tabular}{cc}
+    		\includegraphics[width=0.45\textwidth]{figures/scalefit/distribution_p.pdf} & \includegraphics[width=0.45\textwidth]{figures/scalefit/distribution_cut_p.pdf}
+    	\end{tabular}
+    	\end{center}
+	\caption{\figlabel{p} Same as \fig{thO}, but for $p$.  The ``well-fit'' criteria is applied only to $p$ and the inset is zoomed to $2.0 < p < 2.3$.}
+\end{figure*}
+
+In first panels of Figures \figref{thO}, \figref{thobs}, and \figref{p} we plot histograms of the estimated values for $\thO$, $\thobs/\thO$, and $p$ for our sample.  The opening angle $\thO$ has a broad distribution with isolated peaks at $\thO \sim 0.05, 0.28$ rad.  The observer angle $\thobs / \thO$ is broad, with a spike at $\thobs/\thO \sim 0.5$. The spectral index $p$ decreases from $p\sim 2.1$ into a tail which extends to $p=3$.  Since these plots include fits which had unconstrained distributions, they do not reflect the true distributions $P(\thO)$, $P(\thobs)$, $P(p)$ in our sample.  For instance, the large spikes near the domain center in Figures \figref{thO} and \figref{thobs} are due to including the medians of distributions which were almost uniform.   
+
+To resolve this we make cuts on our dataset to eliminate poorly-constrained fits.  We employ the following criterion to qualify a particular parameter as ``well-fit'': the width of the 68\% quantile must be less than half the width of parameter's domain (see \tab{bounds}) and the best-fit (maximum posterior, minimum $\chi^2$) value must lie within the 68\% quantile.  The number of light curves passing each criterion are given in \tab{passed}.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{ccc}
+a & b & c
+\end{tabular}
+\end{center}
+\caption{Number of light curves passing the ``well-fit'' criteria for each parameter. \tablabel{passed} }
+\end{table}
+
+%\begin{deluxetable}{cc}
+%\tablecaption{Number of light curves passing the ``well-fit'' criteria for each parameter. \tablabel{passed} }
+%\tablewidth{0pt}
+%\tablehead{\colhead{Parameter} & \colhead{Number of Well Fit Light Curves}}
+%\startdata
+%$\thO$ & $53$  \\
+%$\thobs / \thO$ & $63$ \\
+%$p $& $128$ \\
+% $\thO$ and $\thobs / \thO$ & $ 34$ \\
+%$\thO$,  $\thobs / \thO$ and $p$ & $15$ \\
+%\enddata
+%\end{deluxetable}
+
+For a burst to be considered ``well-fit'' and included in the global distribution of $\thO$ and $\thobs$ we require it to have passed the criteria for both $\thO$ and $\thobs$.  There are 31 such light curves in our sample, the histograms of their values of $\thO$ and $\thobs / \thO$ are given in the second panels of Figures \figref{thO} and \figref{thobs} respectively.  For a burst to be included in the global distribution of $p$ we only require it to be ``well-fit'' in $p$.  There are 108 of these bursts, the histogram of their values of $p$ is given in the second panel of \fig{p}.  Summary statistics of these histograms are given in tab{quantiles}.
+
+\begin{table}
+\begin{center}
+\begin{tabular}{ccc}
+a & b & c
+\end{tabular}
+\end{center}
+\caption{Quantiles on distribution of fit values for $\thO$, $\thobs / \thO$, and $p$. \tablabel{quantiles}}
+\end{table}
+
+%\begin{deluxetable}{cccc}
+%\tablecaption{Quantiles on distribution of fit values for $\thO$, $\thobs / \thO$, and $p$. \tablabel{quantiles} }
+%\tablewidth{0pt}
+%\tablehead{\colhead{Parameter} & \colhead{Median} & \colhead{68\% Quantile} & \colhead{95\% Quantile}}
+%\startdata
+%$\thO$ &  $0.097$ & $(0.056, 0.33)$ & $(0.055, 0.42)$\\
+%$\thobs / \thO$ & $0.57$ & $(0.26, 0.73)$ & $(0.16, 0.75)$ \\
+%$p $& $2.30$ & $(2.08, 2.78)$ & $(2.03, 4.05)$ \\
+%\enddata
+%\end{deluxetable}
+
+
+\underline{Half opening angle $\thO$}: We find half of the well-fit bursts have a small opening angle $0.045 < \thO < 0.097$ rad.  The remainder are broadly distributed throughout the allowed range $0.097 < \thO < 0.5$ rad.  As the lower cutoff at 0.045 rad is a reflection of our simulation coverage and prior, it is possible some of the small angle bursts in fact have $\thO < 0.045$ rad.  Our results are consistent with \cite{Racusin09}, who found a similar distribution of $\thO$ with a median of 0.094 rad.
+
+\underline{Off-axis observer angle $\thobs$}:  The $\thobs  / \thO$ distribution is broad with a median at 0.57 and 95\% quantiles at (0.16, 0.75).  These afterglows are almost certainly observed off-axis, at a significant fraction of the opening angle.  This can have a profound effect on afterglow light curve analysis.  Jet-breaks occur when the emission surface seen by an observer begins extending beyond the edges of a jet, causing the light curve to sharply steepen.  When viewed off-axis the near edge of the jet will be seen before the far edge, causing the jet-break transition to become extended over time  \citep{vanEer12obs, vanEer13boost}.  It may be very difficult to see off-axis jet breaks without late-time observations.
+
+\underline{Electron spectral index $p$}:  More than half of our entire sample passed the well-fit criteria for $p$.  The distribution of fit values for $p$ spans the allowed domain, favouring smaller values $p < 2.30$.  Some concern may be raised that so many bursts seem to require values so close to the $p>2$ boundary imposed by the prior.  From inspection of individual fits, we find this is not the case.  Bursts with well-fit $p$ distributions centered near 2 tend to be very sharply peaked, so that the $p=2$ case is safely in the tails (eg. \fig{fit1}).  Similarly, we find no indication of interference from the $p<5$ upper bound.  
+
+\subsection{Short Bursts}
+
+Nine short GRBs were included in our sample\footnote{The short GRBs 050509B, 070429B, and 100206A did not have enough data points to be included.}.  Unfortunately few of them produced useful results from our analysis.  GRBs 060801, 070724A, 070809, 080905A, 100117A, and 101219A were unable to find a good fit: all had very broad distributions and a minimum $\chi^2/dof  > 2.0$.  GRBs 090426 and 100724A found reasonable fits, but still do not have enough data to constrain the parameters.  These bad fits could be the result of being over-aggressive in our data selection, inappropriate priors, or that these afterglows break one or more of our model assumptions.  
+
+On the other hand, GRB 051221A produced a good fit with $\thO = 0.448^{+0.031}_{-0.038}$ rad, $\thobs/\thO = 0.449^{+0.053}_{-0.058}$, and $p = 2.024^{+0.025}_{-0.014}$.  This indicates the afterglow was most likely caused by a very broad jet, and was observed significantly off-axis.  The $p$ value is quite small, with the distribution running directly into the lower bound at $p = 2.0$.  This indicates a need for followup with a model that can provide for $p < 2$.
+
+\citet{Zhang14} find a different best-fit: $\thO = 0.10$ rad, $\thobs/\thO = 0.08$, and $p=2.36$.  Their results are consistent with ours, however, as their posterior distributions are quite broad and have significant weight in our reported region.  Our fit uses only \swiftXRT{} data and begins at $t_{obs} = 1877$ s, while their fit includes late time \chandra{} data and only begins at $t_{obs} = 30,864$ s.  To determine the exact source of the difference we did runs with both starting times, both with and without the \chandra{} data.  The \chandra{} data does not strongly affect the fit, rather it is the choice of initial time which strongly determines the result.  
+
+The light curve for 051221A has a plateau from $\sim$2000 s to $\sim$20,000 s which we include as part of the early time segment as it passes the protocol outlined in Section 3.  A detailed analysis of this burst using radio, optical, and X-ray data was given in \citet{Soderberg06}, reporting $0.10 \leq \thO \leq 0.13$ rad, $p = 2.15 \pm 0.10$, $\thobs=0$ (implicitly) and attributing the plateau to an energy injection phase.  Our best-fit, ignoring self-absorption, matches both the radio and X-ray data but systemically under predicts the optical data by a factor of a few.  This discrepancy with the optical could be due to the global cooling time approximation \citep{vanEer10offaxis, Guidorzi14}.  A strong caveat on our fit result is the assumption the plateau is due solely to the observational effects of a decelerating blast wave.  In particular it is difficult to reconcile the regular pre-plateau stage with a pure blast wave model.  If the plateau is indeed due to energy injection, then the \scalefit{} model is inapplicable to the early-time light curve and a later time to begin fitting would be more appropriate.  
+
+Constraining the orientation, $\thobs$, and opening angle $\thO$, of short GRBs remains of specific interest because of the implication for gravitational wave science. If short GRBs are detectable electro-magnetic counterparts to gravitational wave events, constraining their orientation would greatly reduce the degeneracy in the possible fits to the GW signal \citep{Nissanke13, Arun14}.  Additionally, constraining their opening angle will constrain their beaming corrected rates and total energies.
+
+%%%%%%
+% Discussion %
+%%%%%%
+
+
+\section{Discussion}
+
+Given the usual cosmological assumptions of isotropy and homogeneity, it is expected that the orientation of GRB jets is random.  Since larger off-axis angles $\thobs$ correspond to a larger solid angle of possible viewing, the theoretical distribution of $\thobs/\thO$ for a homogeneously emitting conical outflow is linear:
+\begin{equation}
+	P_{theo}(\thobs/\thO) \propto \thobs / \thO \ . \eqlabel{theo}
+\end{equation}
+However, this is almost certainly not the correct distribution of \emph{observed} $\thobs/\thO$.  The likelihood of observing an afterglow with a particular $\thobs/\thO$ depends not only on the orientation of jets relative to Earth (\eq{theo}), but also on the spreading of the blast wave, the brightness profile across the blast wave, and observational detection biases \citep[see e.g.][]{vanEer12obs}.  The brightness profile of a blast wave has two sources: the structure of the outflow itself and the observational limb-brightening effect.  The structure of outflows arising from GRBs is still unknown.  Many models exist in the literature, including the basic unstructured top-hat and more complicated structured models such as two-component \citep[e.g.][]{Berger03}, power-law decay \citep{Rossi02}, or the boosted fireball \citep{Duffell13B}.  Regardless of the outflow structure, the simple optics of observing a relativistic outflow also produce a limb-brightening effect, enhancing observed radiation from the on-edge region of a blast wave \citep{Meszaros06}.  Both these effects will be rolled into the observed distribution of $\thobs/\thO$, as well as any observational biases which may be present for the particular experiment under consideration.  In principle, given enough data it may be possible to study the structure of the outflow from the observed distribution of $\thobs/\thO$.
+
+Our distribution of $\thobs/\thO$, shown in \fig{thobs}, indicates many afterglows have significant observer angles and very few have $\thobs < 0.2\ \thO$ or $\thobs > 0.8\ \thO$.  Although we are not currently able to make claims to the source of these features, be they due to orientation, structure, or observational biases, the sheer presence of large observer angles in several bursts is of crucial importance to estimates for total jet energy $E_{jet}$.  
+
+Figures \figref{thO} and \figref{thobs} indicate a typical observer angle is $\thobs \approx 0.05$ rad $\approx 3$ degrees.  It is important to state that while these angles are small, they are not insignificant.  Even small off-axis observer angles can have a large effect on the light curve if the opening angle was also small.  In particular, when $\thobs$ is a significant fraction of $\thO$, the jet break is smeared from a sharp feature to an extended transition from pre- to post-break slopes.  The delay in the onset of the post-break slope can be large enough to push the jet break out of \swift{}'s typical viewing window (i.e. 10 days) \citep{vanEer10offaxis, vanEer11}.  Additionally, the smooth transition may hinder efforts to detect jet breaks by broken power-law fits.  Both these effects likely contribute to the  ``missing jet break'' problem.
+  
+Our results are generally consistent with the complementary study investigating afterglows with observations by both the \swiftXRT{} and \chandra{} \citep{Zhang14}.  This study used the same theoretical model, but with an independent implementation and \multinest{} sampling.  The overall consistency of the results shared by both studies validates the robustness of the model and analyses.  Some individual fits display differences, most of which are due to different choices in selecting how much of the \swiftXRT{} data to attempt to fit.  The inclusion of \chandra{} points can also have a strong effect on the light curve, indicating the utility of using late time followup when it is available.
+
+Possible methods for improving the fit results are currently being studied.  Further work will include the incorporating multi-band data and and a stellar wind circumburst medium into the fits.  Multi-band data should break the degeneracy between $\Eiso$, $n_0$, and $\epse$, allowing much more information to be extracted from the analysis.  Inclusion of stellar wind environments will hopefully lead to more well-fit bursts in this sample.
+
+The full results of this analysis, the posterior probability distribution function (pdf) $p(\Theta | D)$ of each burst in the sample, will be made available online at the Afterglow Library\footnote{\afterglowlibrary}. Researchers interested in using results of this paper are highly recommended to use these instead of the summary statistics presented in the appendix of this paper.  The full 7-dimensional pdf, for instance, may be marginalized to produce a pdf for any subset of $\Theta$, taking into account all correlations between parameters.  The posterior $p(\Theta | D)$ will be made available as a list of MCMC samples in the HDF5 data format.
+
+
+%%%%%%
+% Summary %
+%%%%%%
+
+\section{Summary}
+
+We have run the \scalefit{} analysis on a sample of GRB afterglow light curves observed by the \swiftXRT{} between 2005 and 2012.  The sample included all afterglows with a known redshift and a sufficient number of binned light curve points to perform the analysis; 226 light curves in total.  The \scalefit{} afterglow model uses scaling relations in the hydrodynamic and radiation equations to calculate a light curve from precomputed 2d simulations.  Although the model displayed significant degeneracies between $\Eiso$, $n_0$, $\epse$ and $\epsB$, the values of the opening angle $\thO$, observer angle $\thobs$, and spectral index $p$ could be constrained in many bursts.  The \scalefit{} package will be released to the public in the near future \citep[][in prep]{vanEer14scalefit}.
+
+Of the 226 fits, 128 had sufficiently constrained values of $p$ to be included in the result.  We found $p$ has a highly asymmetric distribution, with a median of 2.30 and 68\% quantile $( 2.08 , 2.78)$.  Thirty four bursts in our sample were sufficiently constrained in both $\thO$ and $\thobs / \thO$ to be included in the result.  The distribution of $\thO$ was also highly asymmetric, with a median of $0.097$ rad and a 68\% quantile $(0.056, 0.33)$ rad.  The off-axis observer angle $\thobs/\thO$ had a median of $0.57$ with a 68\% quantile of $(0.26, 0.73)$.  Only four afterglows in the well-fit sample, and thirteen in the full sample, had an observer angle less than $0.2 \thO$.  Therefore, we find that most GRB afterglows are observed off-axis, at a significant fraction of the jet opening angle.  Off-axis viewing can have profound effects on the expected behaviour of the afterglow light curve, delaying and smoothing jet breaks out of the typical \swift{} observing window, which may contribute to the ``missing jet-break problem''.
+
+Our sample include a number of short bursts. Although an orientation was obtained for GRB 051221A, the atypical nature of the light curve decay (including a  possible episode of energy injection, or multi-component jet), renders the application of our decelerating blast wave model questionable in this individual case. Constraining the orientation of short GRBs remains highly desirable given their potential as observable GW counterparts.  The other bursts for which opening angle and orientation are constrained do not share atypical features in the data preceding the regular decay stage.
+
+The full results for this analysis, including the MCMC samples, will be made available on the Afterglow Library.
+
+%%%%%%
+% Acknowledgements %
+%%%%%%
+
+\section{Acknowledgements}
+
+This research was supported in part by NASA through grant NNX10AF62G issued through the Astrophysics Theory Program, by the NSF through grant AST-1009863, by the Chandra grant TM3-14005X, and by Fermi grant NNX13AO93G.  HvE acknowledges support by the Alexander von Humboldt foundation.  BZ acknowledges the support of SAO contract SV4-74018, NASA contract NAS5-00136, and by SAO grants AR3-14005X, GO1-12102X, and GO3-14067X.  Resources supporting this work were provided by the NASA High-End Computing (HEC) Program through the NASA Advanced Supercomputing (NAS) Division at Ames Research Center. The software used in this work was in part developed by the DOE-supported ASCI/Alliance Center for Astrophysical Thermonuclear Flashes at the University of Chicago.  This work made use of data supplied by the UK Swift Science Data Centre at the University of Leicester.  We thank Judith Racusin, David N. Burrows, Jochen Greiner, David Hogg, and Daniel Foreman-Mackey for their many helpful discussions and comments.
+
+\section{Appendix - Result Table}
+
+\begin{table}
+\begin{center}
+\begin{tabular}{ccc}
+a & b & c
+\end{tabular}
+\end{center}
+\caption{All the results \tablabel{results}}
+\end{table}
+

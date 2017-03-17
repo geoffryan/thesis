@@ -1,5 +1,6 @@
 % Based on format by José Koiller
 % Updated by Daniel Foreman-Mackey
+% And used now by Geoffrey Ryan
 
 %% Use the first of the following lines during production to
 %% easily spot "overfull boxes" in the output. Use the second
@@ -7,11 +8,10 @@
 % \documentclass[12pt,draft,letterpaper]{report}
 \documentclass[12pt,letterpaper]{report}
 
-\newcommand{\thesistitle}{Methods for the detection and characterization \\
-                          of exoplanets and their population}
-\newcommand{\thesisauthor}{Daniel Foreman-Mackey}
-\newcommand{\thesisadvisor}{Professor David W. Hogg}
-\newcommand{\graddate}{May 2015}
+\newcommand{\thesistitle}{Title}
+\newcommand{\thesisauthor}{Geoffrey Ryan}
+\newcommand{\thesisadvisor}{Professor Andrew MacFadyen}
+\newcommand{\graddate}{May 2017}
 
 %% The following makes chapters and sections, but not subsections,
 %% appear in the TOC (table of contents). Increase to 2 or 3 to
@@ -86,7 +86,7 @@
 % %%%%%%%%%%%%%% Copyright %%%%%%%%%%%%%%%%%
 \vspace*{\fill}
 \begin{center}
-    Copyright \textcopyright\ 2015 Daniel Foreman-Mackey \\
+    Copyright \textcopyright\ 2017 Geoffrey Ryan \\
     This work is licensed under a Creative Commons Attribution 4.0
     International License.
     \addcontentsline{toc}{section}{Copyright}
@@ -136,10 +136,8 @@
 %% meant to be the introduction, then comment out the lines below.
 \input{intro}
 
-\input{chapters/emcee}
-\input{chapters/exopop}
-\input{chapters/ketu}
-\input{chapters/peerless}
+\input{chapters/minidisk}
+\input{chapters/scalefit}
 
 % Conclusion
 \input{conclusion}
@@ -147,8 +145,8 @@
 
 % %%%%% Appendices start %%%%%%%%%%%%%%%%
 % %% Comment out the following line if your thesis has no appendix
-% \appendix
-% \input{app1}
+ \appendix
+ \input{app1}
 % %% Note: If your thesis has more than one appendix, NYU requires a "list of
 % %% appendices" page before the body of the thesis. I don't provide the tools
 % %% to create that here, so you're on your own for that one... Sorry.

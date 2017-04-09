@@ -266,29 +266,24 @@ The initial condition for each minidisk is an $\al=10^{-3}$ Novikov--Thorne accr
 
 \begin{table}
 \begin{center}
-\begin{tabular}{ccc}
-a&b&c
+\begin{tabular}{ccccccc}
+\hline \hline
+Name &${\dot{M}}^a$ & $r_\text{in}$ & $q$ & $N_r$ & ${T_\text{start}}^b$ & ${T_\text{end}}^b$ \\ [0.5ex]
+\hline
+\model{1} & $1.9\times10^{3}$  & $4M$ & $0.11$ & $256$ & $0$ & $29$ \\
+\model{1.5} & $5.8\times10^{2}$ & $4M$ & $0.11$ & $256$ & $0$ & $29$ \\
+\model{2} & $1.9\times10^{2}$ &  $4M$ & $0.11$ & $256$ & $0$ & $29$ \\
+\model{2.5} & $5.8\times10^{1}$ & $4M$ & $0.11$ & $256$ & $0$ & $25$ \\
+\model{3} & $1.9\times10^{1}$ & $4M$ & $0.11$ & $256$ & $0$ & $29$ \\
+\model{2-hr} & $1.9\times10^{2}$ & $4M$ & $0.11$ & $512$ & $28$ & $32$ \\
+\model{2-bc} & $1.9\times10^{2}$ & $1.8M$ & $0.11$ & $256$ & $25$ & $26$ \\ [0.5ex]
+\hline
+\multicolumn{7}{l}{\textsuperscript{a}$\dot{M}$ is given in code units and scales as $M^{3/2}$.}\\
+\multicolumn{7}{l}{\textsuperscript{b}$T_\text{start}$ and $T_\text{end}$ are given in units of $T_\text{bin}$.}
 \end{tabular}
 \end{center}
-\caption{\tablabel{models} Minidisk models.}
+\caption{Minidisk Models \label{tb:models}}
 \end{table}
-
-%\begin{deluxetable}{ccccccc}
-%\tablecaption{Minidisk Models \label{tb:models}}
-%%\tablewidth{0pt}
-%\tablehead{\colhead{Name} &\colhead{$\dot{M}$\tablenotemark{a}} & \colhead{$r_\text{in}$} & \colhead{$q$} & \colhead{$N_r$} & \colhead{$T_\text{start}$\tablenotemark{b}} & \colhead{$T_\text{end}$\tablenotemark{b}}}
-%\startdata
-%\model{1} & $1.9\times10^{3}$  & $4M$ & $0.11$ & $256$ & $0$ & $29$ \\
-%\model{1.5} & $5.8\times10^{2}$ & $4M$ & $0.11$ & $256$ & $0$ & $29$ \\
-%\model{2} & $1.9\times10^{2}$ &  $4M$ & $0.11$ & $256$ & $0$ & $29$ \\
-%\model{2.5} & $5.8\times10^{1}$ & $4M$ & $0.11$ & $256$ & $0$ & $25$ \\
-%\model{3} & $1.9\times10^{1}$ & $4M$ & $0.11$ & $256$ & $0$ & $29$ \\
-%\model{2-hr} & $1.9\times10^{2}$ & $4M$ & $0.11$ & $512$ & $28$ & $32$ \\
-%\model{2-bc} & $1.9\times10^{2}$ & $1.8M$ & $0.11$ & $256$ & $25$ & $26$ 
-%\enddata
-%\tablenotetext{a}{$\dot{M}$ is given in code units and scales as $M^{3/2}$.}
-%\tablenotetext{b}{$T_\text{start}$ and $T_\text{end}$ are given in units of $T_\text{bin}$.}
-%\end{deluxetable}
 
 
 The five primary minidisk models in this study are summarized in \tab{models}.  The accretion rate is given in code units, which scale as $M^{3/2}$.  If $M=M_{\odot}$, the accretion rate for \model{2} corresponds to $2\times10^{-3} M_{\odot} \text{yr}^{-1}$.  At this scale $T_\text{bin} = 0.3$ s and $T_\text{merge} = 20$ minutes.  For an SMBHB with $M_\text{bin} = 10^6 M_{\odot}$, $T_\text{bin} = 8.6$ hr and $T_\text{merge} = 3.7$ yr.  Two tests, Models \texttt{2-hr} and \texttt{2-bc}, were run to check dependence on numerical resolution and the inner boundary condition, respectively. Due to resource constraints, \model{2-bc} was only run for a single orbit, and \model{2-hr} for four orbits.

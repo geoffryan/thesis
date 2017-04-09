@@ -170,32 +170,28 @@ In code tests, we found fits were not very sensitive to the overall scale of the
 
 \begin{table}
 \begin{center}
-\begin{tabular}{ccc}
-a & b & c
+\begin{tabular}{cc}
+\hline \hline
+Parameter & Prior \\[2pt]
+\hline
+$z$ & Fixed by catalogue \\[2pt]
+$\ddl$ & Fixed by $z$ and cosmology\textsuperscript{a} \\[2pt]
+$\log_{10} \Edl$ & $[-10.0,3.0]$  \\[2pt]
+$\log_{10} \ndl$ & $[-5.0,5.0]$ \\[2pt]
+$\thO $& $[0.045,0.5]$ \\[2pt]
+ $\thobs / \thO$ & $[0.0,1.0]$ \\[2pt]
+$p$ & $[2.0, 5.0]$ \\[2pt]
+ $\log_{10} \epse$ & [-10.0, 0.0] \\[2pt]
+$\log_{10} \epsB$ & [-10.0, 0.0] \\[2pt]
+$\xN$ & Fixed at $1.0$ \\[2pt]
+\hline
+\multicolumn{2}{l}{\textsuperscript{a}We use a benchmark $\Lambda$CDM cosmology with $H_0 = 71\text{km}\ \text{s}^{-1} \text{Mpc}^{-1}$ and $\Omega_m = 0.27$.} \\
+\multicolumn{2}{l}{Parameters which are not fixed are given a uniform prior within the bounds above.}
 \end{tabular}
 \end{center}
 \caption{Priors for parameters in $\Theta$. \tablabel{bounds}}
 \end{table}
 
-%\begin{deluxetable}{cc}
-%\tablecaption{Priors for parameters in $\Theta$. \tablabel{bounds}}
-%\tablewidth{0pt}
-%\tablehead{\colhead{Parameter} & \colhead{Prior}}
-%\startdata
-%$z$ & Fixed by catalogue \\[2pt]
-%$\ddl$ & Fixed by $z$ and cosmology\tablenotemark{a} \\[2pt]
-%$\log_{10} \Edl$ & $[-10.0,3.0]$  \\[2pt]
-%$\log_{10} \ndl$ & $[-5.0,5.0]$ \\[2pt]
-%$\thO $& $[0.045,0.5]$ \\[2pt]
-% $\thobs / \thO$ & $[0.0,1.0]$ \\[2pt]
-%$p$ & $[2.0, 5.0]$ \\[2pt]
-% $\log_{10} \epse$ & [-10.0, 0.0] \\[2pt]
-%$\log_{10} \epsB$ & [-10.0, 0.0] \\[2pt]
-%$\xN$ & Fixed at $1.0$ 
-%\enddata
-%\tablenotetext{a}{We use a benchmark $\Lambda$CDM cosmology with $H_0 = 71\text{km}\ \text{s}^{-1} \text{Mpc}^{-1}$ and $\Omega_m = 0.27$.}
-%\tablecomments{Parameters which are not fixed are given a uniform prior within the bounds above.}
-%\end{deluxetable}
 
 The MCMC analysis is performed using the parallel-tempered affine-invariant ensemble sampler implemented by the \emcee{} python package.  This algorithm uses an ensemble of ``walkers'' moving simultaneously through parameter space instead of the standard single walker approach (e.g. Metropolis-Hastings).  The use of the ensemble allows the method to be affine-invariant: affine transformations of the distribution do not affect the efficiency of the sampling.  Strong linear correlations between parameters are sampled with the same quality as uncorrelated parameters, a difficult problem for traditional samplers.  
 
@@ -284,47 +280,37 @@ To resolve this we make cuts on our dataset to eliminate poorly-constrained fits
 
 \begin{table}
 \begin{center}
-\begin{tabular}{ccc}
-a & b & c
+\begin{tabular}{cc}
+\hline \hline
+Parameter & Number of Well Fit Light Curves \\
+\hline
+$\thO$ & $53$  \\
+$\thobs / \thO$ & $63$ \\
+$p $& $128$ \\
+ $\thO$ and $\thobs / \thO$ & $ 34$ \\
+$\thO$,  $\thobs / \thO$ and $p$ & $15$ \\
+\hline
 \end{tabular}
-\end{center}
 \caption{Number of light curves passing the ``well-fit'' criteria for each parameter. \tablabel{passed} }
+\end{center}
 \end{table}
-
-%\begin{deluxetable}{cc}
-%\tablecaption{Number of light curves passing the ``well-fit'' criteria for each parameter. \tablabel{passed} }
-%\tablewidth{0pt}
-%\tablehead{\colhead{Parameter} & \colhead{Number of Well Fit Light Curves}}
-%\startdata
-%$\thO$ & $53$  \\
-%$\thobs / \thO$ & $63$ \\
-%$p $& $128$ \\
-% $\thO$ and $\thobs / \thO$ & $ 34$ \\
-%$\thO$,  $\thobs / \thO$ and $p$ & $15$ \\
-%\enddata
-%\end{deluxetable}
 
 For a burst to be considered ``well-fit'' and included in the global distribution of $\thO$ and $\thobs$ we require it to have passed the criteria for both $\thO$ and $\thobs$.  There are 31 such light curves in our sample, the histograms of their values of $\thO$ and $\thobs / \thO$ are given in the second panels of Figures \figref{thO} and \figref{thobs} respectively.  For a burst to be included in the global distribution of $p$ we only require it to be ``well-fit'' in $p$.  There are 108 of these bursts, the histogram of their values of $p$ is given in the second panel of \fig{p}.  Summary statistics of these histograms are given in tab{quantiles}.
 
 \begin{table}
 \begin{center}
-\begin{tabular}{ccc}
-a & b & c
+\begin{tabular}{cccc}
+\hline \hline
+Parameter & Median & 68\% Quantile & 95\% Quantile \\ [0.5ex]
+\hline
+$\thO$ &  $0.097$ & $(0.056, 0.33)$ & $(0.055, 0.42)$\\
+$\thobs / \thO$ & $0.57$ & $(0.26, 0.73)$ & $(0.16, 0.75)$ \\
+$p $& $2.30$ & $(2.08, 2.78)$ & $(2.03, 4.05)$ \\
+\hline
 \end{tabular}
 \end{center}
 \caption{Quantiles on distribution of fit values for $\thO$, $\thobs / \thO$, and $p$. \tablabel{quantiles}}
 \end{table}
-
-%\begin{deluxetable}{cccc}
-%\tablecaption{Quantiles on distribution of fit values for $\thO$, $\thobs / \thO$, and $p$. \tablabel{quantiles} }
-%\tablewidth{0pt}
-%\tablehead{\colhead{Parameter} & \colhead{Median} & \colhead{68\% Quantile} & \colhead{95\% Quantile}}
-%\startdata
-%$\thO$ &  $0.097$ & $(0.056, 0.33)$ & $(0.055, 0.42)$\\
-%$\thobs / \thO$ & $0.57$ & $(0.26, 0.73)$ & $(0.16, 0.75)$ \\
-%$p $& $2.30$ & $(2.08, 2.78)$ & $(2.03, 4.05)$ \\
-%\enddata
-%\end{deluxetable}
 
 
 \underline{Half opening angle $\thO$}: We find half of the well-fit bursts have a small opening angle $0.045 < \thO < 0.097$ rad.  The remainder are broadly distributed throughout the allowed range $0.097 < \thO < 0.5$ rad.  As the lower cutoff at 0.045 rad is a reflection of our simulation coverage and prior, it is possible some of the small angle bursts in fact have $\thO < 0.045$ rad.  Our results are consistent with \cite{Racusin09}, who found a similar distribution of $\thO$ with a median of 0.094 rad.
@@ -391,14 +377,14 @@ The full results for this analysis, including the MCMC samples, will be made ava
 
 This research was supported in part by NASA through grant NNX10AF62G issued through the Astrophysics Theory Program, by the NSF through grant AST-1009863, by the Chandra grant TM3-14005X, and by Fermi grant NNX13AO93G.  HvE acknowledges support by the Alexander von Humboldt foundation.  BZ acknowledges the support of SAO contract SV4-74018, NASA contract NAS5-00136, and by SAO grants AR3-14005X, GO1-12102X, and GO3-14067X.  Resources supporting this work were provided by the NASA High-End Computing (HEC) Program through the NASA Advanced Supercomputing (NAS) Division at Ames Research Center. The software used in this work was in part developed by the DOE-supported ASCI/Alliance Center for Astrophysical Thermonuclear Flashes at the University of Chicago.  This work made use of data supplied by the UK Swift Science Data Centre at the University of Leicester.  We thank Judith Racusin, David N. Burrows, Jochen Greiner, David Hogg, and Daniel Foreman-Mackey for their many helpful discussions and comments.
 
-\section{Appendix - Result Table}
+%\section{Appendix - Result Table}
 
-\begin{table}
-\begin{center}
-\begin{tabular}{ccc}
-a & b & c
-\end{tabular}
-\end{center}
-\caption{All the results \tablabel{results}}
-\end{table}
-
+%\begin{table}
+%\begin{center}
+%\begin{tabular}{ccc}
+%a & b & c
+%\end{tabular}
+%\end{center}
+%\caption{All the results \tablabel{results}}
+%\end{table}
+%

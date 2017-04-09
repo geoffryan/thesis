@@ -1,0 +1,86 @@
+\renewcommand{\chapid}{numerics}
+
+% Chapter specific commands:
+
+\newcommand{\LL}{\mathcal{L}}
+
+% Math:
+
+\chapter{Numerical Relativistic Hydrodynamics\chaplabel{numerics}}
+
+This Chapter presents ongoing work with Paul Duffell and Andrew MacFadyen which will be incorporated into a future publication upon the public release of the GRMHD \Disco\ code.
+
+%%%%%
+% Abstract
+%%%%%
+
+\section{Chapter Abstract}
+
+We formulate and review the system of equations relevant for astrophysical fluid flow, particularly in a relativistic context.  We develop numerical methods for solving these equations in the finite volume formulation, with a particular focus on schemes which allow for a moving numerical mesh.  
+
+%%%%%
+%Section 1 - Introduction
+%%%%%
+
+\section{Introduction} \sectlabel{intro}
+
+At macroscopic scales the universe can be described as a $3+1$ dimensional Lorentzian manifold with metric tensor $g_{\mu\nu}$ and a number of interacting, dynamical fields.  These fields are governed by an action principle
+\begin{equation}
+	S = \int d^4x \sqrt{-g} \left( R - \frac{1}{4}F^{\mu\nu}F_{\mu\nu}  + \LL_M\right)\ . \eqlabel{action}
+\end{equation}
+In \eq{action} $g$ is the determinant and $R$ is the Ricci scalar of the metric tensor $g_{\mu\nu}$, $F_{\mu\nu} = \nabla_\mu A_\nu - \nabla_\nu A_\mu$ is the electromagnetic field strength tensor for the electromagnetic four potential $A_\mu$, and $\LL_M$ is the Lagrangian associated with all other matter fields and their interactions.  We will use $\LL_G$ and $\LL_{EM}$ to refer to the first and second terms of \eq{action} respectively.
+
+  The matter fields, $A_\mu$, and $g_{\mu\nu}$ evolve in such a way that $\delta S = 0$.  The resulting Euler-Lagrange equations for $A_\mu$ take the form:
+  \begin{align}
+  	\nabla_\mu F^{\mu\nu} &= J^\mu \eqlabel{maxwell1} \ , \\
+	\text{where } J^\mu &= \frac{\delta \LL_M}{\delta A_\mu}\ .
+   \end{align}
+   The construction of $F_{\mu\nu}$ is such that it obeys a Bianchi identity $\nabla_{[\mu}F_{\nu\sigma]} = 0$.  This is better stated in terms of the dual tensor $*F_{\mu\nu}$:
+     \begin{align}
+  	\nabla_\mu *\! F^{\mu\nu} &= 0 \eqlabel{maxwell2} \ , \\
+	\text{where } *\! F^{\mu\nu} &= \frac{1}{2}\epsilon^{\mu\nu\sigma\lambda}F_{\sigma\lambda} \ .
+   \end{align}
+   The Equations \eqrefp{maxwell1} and \eqrefp{maxwell2} together are Maxwell's equations.
+   
+   Similarly, the Euler-Lagrange equations for $g_{\mu\nu}$ give the Einstein Field Equations:
+  \begin{align}
+	G^{\mu\nu} &= 8\pi T^{\mu\nu} \eqlabel{einstein} \ , \\
+	\text{where } G^{\mu\nu} &= R^{\mu\nu} - \frac{1}{2}g^{\mu\nu} R \ , \\
+	\text{and } T^{\mu\nu} &= \frac{\delta}{\delta g^{\mu\nu}}\left( \LL_M + \LL_{EM} \right) \ .
+   \end{align} 
+   The Einstein tensor $G^{\mu\nu}$ also obeys a Bianchi identity $\nabla_\mu G^{\mu\nu}=0$. By the Einstein Field Equations \eqrefp{einstein}, the stress-energy tensor $T^{\mu\nu}$ must obey the same identity:
+   \begin{equation}
+   	\nabla_\mu T^{\mu\nu} = 0 \eqlabel{consSE}\ .
+   \end{equation}  
+   \eq{consSE} expresses local conservation of energy and momentum.
+   
+   The matter Lagrangian $\LL_M$ and its equations of motion are complicated functions of many interacting fields.  At macroscopic scales the fields can be described as a large number $N \gg 10^{23}$ of discrete interacting particles.  In this work we avoid dealing directly with the particle equations of motion and instead work in the \emph{fluid approximation}.    In this approximation the ensemble of particles is locally described by a number density $n(x)$, a four velocity $u^\mu(x)$, and a temperature $T(x)$.  Symmetries of $\LL_M$ correspond to conservation laws which must still be obeyed in the fluid description.  Of particular use is the conservation of baryon number, which requires the local number density of baryons $n_b(x)$ to obey a continuity equation:
+   \begin{equation}
+   	\nabla_\mu \left(n_b\ u^\mu\right) = 0 \eqlabel{contnb}\ .
+   \end{equation}
+  The fluid approximation reduces the description of matter to five degrees of freedom: the number density, the temperature, and the three independent components of the fluid velocity.  The continuity equation \eqrefp{contnb} plus the four equations of energy-momentum conservation \eqrefp{consSE} then provide enough constraints to solve the system so long as it is possible to express the stress-energy tensor $T^{\mu\nu}$ in terms of $n$, $T$, and $u^\mu$ alone, avoiding direct consideration of the material equations of motion.
+  
+  Consider a gas of particles of mass $m$ in a local rest frame. The gas has mass density $\rho = m n$, thermodynamic pressure $P(n,T)$, and internal energy density $u(n,T)$.  We define the total energy density $e = \rho + u$ and the specific energy density $\eps = u / \rho$.  In a local orthonormal frame the stress-energy tensor has components:
+  \begin{equation}
+  	T^{\hat{\mu}\hat{\nu}} = \begin{pmatrix} e & 0 & 0 & 0 \\
+									0 & P & 0 & 0 \\
+									0 & 0 & P & 0 \\
+									0 & 0 & 0 & P \end{pmatrix}\ .
+  \end{equation}
+In this frame the metric tensor takes the form $g_{\hat{\mu}\hat{\nu}} = \text{diag}(-1,1,1,1)$ and the four velocity $u^{\hat{\mu}}  = (1,0,0,0)$.  This leads to the unique decomposition $T^{\hat{\mu}\hat{\nu}} = e u^{\hat{\mu}}u^{\hat{\nu}} + P ( u^{\hat{\mu}}u^{\hat{\nu}} + g^{\hat{\mu}\hat{\nu}})$.  This is an equation between tensors, and hence must be true in all frames. Defining the specific enthalpy $h = (e+P)/\rho = 1 + \eps + P/\rho$ we arrive at the stress-energy tensor for a perfect fluid:
+\begin{equation}
+	T^{\mu\nu} = \rho h \ \! u^\mu u^\nu + P g^{\mu\nu} \eqlabel{defTgas}\ .
+\end{equation}
+%%%%%%
+% Summary %
+%%%%%%
+
+\section{Summary}
+\sectlabel{summary}
+
+
+Summary
+
+\section{Chapter Acknowledgements} \sectlabel{acknowledgements}
+
+Thanks

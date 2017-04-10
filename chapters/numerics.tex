@@ -3,6 +3,10 @@
 % Chapter specific commands:
 
 \newcommand{\LL}{\mathcal{L}}
+\newcommand{\UU}{\mathcal{U}}
+\newcommand{\FF}{\mathcal{F}}
+\renewcommand{\SS}{\mathcal{S}}
+\newcommand{\dual}[1]{*\!\! #1}
 
 % Math:
 
@@ -28,7 +32,7 @@ At macroscopic scales the universe can be described as a $3+1$ dimensional Loren
 \begin{equation}
 	S = \int d^4x \sqrt{-g} \left( R - \frac{1}{4}F^{\mu\nu}F_{\mu\nu}  + \LL_M\right)\ . \eqlabel{action}
 \end{equation}
-In \eq{action} $g$ is the determinant and $R$ is the Ricci scalar of the metric tensor $g_{\mu\nu}$, $F_{\mu\nu} = \nabla_\mu A_\nu - \nabla_\nu A_\mu$ is the electromagnetic field strength tensor for the electromagnetic four potential $A_\mu$, and $\LL_M$ is the Lagrangian associated with all other matter fields and their interactions.  We will use $\LL_G$ and $\LL_{EM}$ to refer to the first and second terms of \eq{action} respectively.
+In \eq{action} $R$ is the Ricci scalar of the metric tensor $g_{\mu\nu}$, $F_{\mu\nu} = \nabla_\mu A_\nu - \nabla_\nu A_\mu$ is the electromagnetic field strength tensor for the electromagnetic four potential $A_\mu$, and $\LL_M$ is the Lagrangian associated with all other matter fields and their interactions.  We will use $\LL_G$ and $\LL_{EM}$ to refer to the first and second terms of \eq{action} respectively.
 
   The matter fields, $A_\mu$, and $g_{\mu\nu}$ evolve in such a way that $\delta S = 0$.  The resulting Euler-Lagrange equations for $A_\mu$ take the form:
   \begin{align}
@@ -54,13 +58,15 @@ In \eq{action} $g$ is the determinant and $R$ is the Ricci scalar of the metric 
    \end{equation}  
    \eq{consSE} expresses local conservation of energy and momentum.
    
+\subsection{Matter Content}
+
    The matter Lagrangian $\LL_M$ and its equations of motion are complicated functions of many interacting fields.  At macroscopic scales the fields can be described as a large number $N \gg 10^{23}$ of discrete interacting particles.  In this work we avoid dealing directly with the particle equations of motion and instead work in the \emph{fluid approximation}.    In this approximation the ensemble of particles is locally described by a number density $n(x)$, a four velocity $u^\mu(x)$, and a temperature $T(x)$.  Symmetries of $\LL_M$ correspond to conservation laws which must still be obeyed in the fluid description.  Of particular use is the conservation of baryon number, which requires the local number density of baryons $n_b(x)$ to obey a continuity equation:
    \begin{equation}
    	\nabla_\mu \left(n_b\ u^\mu\right) = 0 \eqlabel{contnb}\ .
    \end{equation}
   The fluid approximation reduces the description of matter to five degrees of freedom: the number density, the temperature, and the three independent components of the fluid velocity.  The continuity equation \eqrefp{contnb} plus the four equations of energy-momentum conservation \eqrefp{consSE} then provide enough constraints to solve the system so long as it is possible to express the stress-energy tensor $T^{\mu\nu}$ in terms of $n$, $T$, and $u^\mu$ alone, avoiding direct consideration of the material equations of motion.
   
-  Consider a gas of particles of mass $m$ in a local rest frame. The gas has mass density $\rho = m n$, thermodynamic pressure $P(n,T)$, and internal energy density $u(n,T)$.  We define the total energy density $e = \rho + u$ and the specific energy density $\eps = u / \rho$.  In a local orthonormal frame the stress-energy tensor has components:
+  Consider a gas of particles of mass $m$ in a local rest frame. The gas has mass density $\rho = m n$, thermodynamic pressure $P(n,T)$, and internal energy density $u(n,T)$.  We define the total energy density $e = \rho + u$ and the specific energy density $\eps = u / \rho$.  Relativistic kinetic theory establishes (CITE) that In a local orthonormal frame the stress-energy tensor has components:
   \begin{equation}
   	T^{\hat{\mu}\hat{\nu}} = \begin{pmatrix} e & 0 & 0 & 0 \\
 									0 & P & 0 & 0 \\
@@ -69,8 +75,33 @@ In \eq{action} $g$ is the determinant and $R$ is the Ricci scalar of the metric 
   \end{equation}
 In this frame the metric tensor takes the form $g_{\hat{\mu}\hat{\nu}} = \text{diag}(-1,1,1,1)$ and the four velocity $u^{\hat{\mu}}  = (1,0,0,0)$.  This leads to the unique decomposition $T^{\hat{\mu}\hat{\nu}} = e u^{\hat{\mu}}u^{\hat{\nu}} + P ( u^{\hat{\mu}}u^{\hat{\nu}} + g^{\hat{\mu}\hat{\nu}})$.  This is an equation between tensors, and hence must be true in all frames. Defining the specific enthalpy $h = (e+P)/\rho = 1 + \eps + P/\rho$ we arrive at the stress-energy tensor for a perfect fluid:
 \begin{equation}
-	T^{\mu\nu} = \rho h \ \! u^\mu u^\nu + P g^{\mu\nu} \eqlabel{defTgas}\ .
+	T^{\mu\nu}_{gas} = \rho h \ \! u^\mu u^\nu + P g^{\mu\nu} \eqlabel{defTgas}\ .
 \end{equation}
+The pressure and internal energy are functions of the local density and temperature, which must be determined from the properties of the particular fluid under consideration.  These relationships are referred to as the equation of state of the fluid.
+
+\subsection{Electromagnetic Content}
+
+\section{Hyperbolic Equations}
+
+We have established that an ideal astrophysical plasma will obey the equations of general relativistic magnetohydrodynamics (GRMHD):
+\begin{align}
+	\nabla_\mu  \rho u^\mu &= 0\ , \eqlabel{GRMHD1}\\
+	\nabla_\mu T^{\mu\nu} &= 0 , \eqlabel{GRMHD2}\\
+	\nabla_\mu \dual{F}^{\mu\nu} &= 0\ . \eqlabel{GRMHD3}
+\end{align}
+These equations all take the form of conservation laws and form a system of non-linear hyperbolic partial differential equations.  The numerical solution of hyperbolic systems of equations is a rich field of numerical analysis.  For our purposes we will focus on \emph{finite volume} schemes.  To do so we must first establish the integral form of Equations (\eqref{GRMHD1}-\eqref{GRMHD3}).  We begin by expressing the covariant derivatives as coordinate derivatives, which put (\eqref{GRMHD1}-\eqref{GRMHD3}) in the form:
+\begin{align}
+	\partial_\mu \left(\sqrt{-g}\ \! \rho u^\mu\right) &= 0\ , \\
+	\partial_\mu\left( \sqrt{-g}\ \!T^{\mu}_\nu\right) &= \frac{1}{2}\sqrt{-g}\ \!T^{\alpha\beta}\partial_\nu g_{\alpha \beta}\ , \\
+	\partial_\mu \left(\sqrt{-g}\ \! \dual{F}^{\mu\nu}\right) &= 0\ . \eqlabel{GRMHDcoord}
+\end{align}
+These equations are each in \emph{conservative} form
+\begin{equation}
+	\partial_t\ \!\UU + \partial_i \FF^i = \SS \ .
+\end{equation}
+We call $\UU$ the conserved quantity, $\FF^i$ the flux, and $\SS$ the source.
+
+
 %%%%%%
 % Summary %
 %%%%%%

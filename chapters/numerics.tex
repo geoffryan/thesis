@@ -31,7 +31,7 @@ We formulate and review the system of equations relevant for astrophysical fluid
 
 At macroscopic scales the universe can be described as a $3+1$ dimensional Lorentzian manifold with metric tensor $g_{\mu\nu}$ and a number of interacting, dynamical fields.  These fields are governed by an action principle
 \begin{equation}
-	S = \int d^4x \sqrt{-g} \left( R - \frac{1}{4}F^{\mu\nu}F_{\mu\nu}  + \LL_M\right)\ . \eqlabel{action}
+	S = \int d^4x \sqrt{-g} \left( \frac{1}{16\pi} R - \frac{1}{4}F^{\mu\nu}F_{\mu\nu}  + \LL_M\right)\ . \eqlabel{action}
 \end{equation}
 In \eq{action} $R$ is the Ricci scalar of the metric tensor $g_{\mu\nu}$, $F_{\mu\nu} = \nabla_\mu A_\nu - \nabla_\nu A_\mu$ is the electromagnetic field strength tensor for the electromagnetic four potential $A_\mu$, and $\LL_M$ is the Lagrangian associated with all other matter fields and their interactions.  We will use $\LL_G$ and $\LL_{EM}$ to refer to the first and second terms of \eq{action} respectively.
 
@@ -49,9 +49,9 @@ In \eq{action} $R$ is the Ricci scalar of the metric tensor $g_{\mu\nu}$, $F_{\m
    
    Similarly, the Euler-Lagrange equations for $g_{\mu\nu}$ give the Einstein Field Equations:
   \begin{align}
-	G^{\mu\nu} &= 8\pi T^{\mu\nu} \eqlabel{einstein} \ , \\
-	\text{where } G^{\mu\nu} &= R^{\mu\nu} - \frac{1}{2}g^{\mu\nu} R \ , \\
-	\text{and } T^{\mu\nu} &= \frac{\delta}{\delta g^{\mu\nu}}\left( \LL_M + \LL_{EM} \right) \ .
+	G_{\mu\nu} &= 8\pi T_{\mu\nu} \eqlabel{einstein} \ , \\
+	\text{where } G_{\mu\nu} &= R_{\mu\nu} - \frac{1}{2}g_{\mu\nu} R \ , \\
+	\text{and } T_{\mu\nu} &= \frac{-2}{\sqrt{-g}} \frac{\delta}{\delta g^{\mu\nu}}\left(\sqrt{-g}\left( \LL_M + \LL_{EM} \right)\right) \ .
    \end{align} 
    The Einstein tensor $G^{\mu\nu}$ also obeys a Bianchi identity $\nabla_\mu G^{\mu\nu}=0$. By the Einstein Field Equations \eqrefp{einstein}, the stress-energy tensor $T^{\mu\nu}$ must obey the same identity:
    \begin{equation}
@@ -116,6 +116,8 @@ The electric and magnetic fields are spatial vectors: $n_\mu E^\mu = n_\mu n_\nu
 	\dualt{F}^{\mu\nu} &= B^\mu n^\nu - B^\nu n^\mu + \eps^{\mu\nu\sigma\lambda}n_\sigma E_\lambda\ .
 \end{align}
 The four velocity of an observer serves as their local time-like unit vector.  Hence this same decomposition can be done for \emph{any} observer merely by substituting their four velocity $u^\mu$ for $n^\mu$ and renaming the fields, for instance to $e^\mu$ and $b^\mu$.
+
+  
 
 
 \section{Hyperbolic Equations}

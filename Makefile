@@ -13,6 +13,7 @@ thesis.pdf: *.tex chapters/*.tex *.bib
 	${LATEX} thesis
 	( grep Rerun thesis.log && ${LATEX} thesis ) || echo "Done."
 	( grep Rerun thesis.log && ${LATEX} thesis ) || echo "Done."
+	#open thesis.pdf
 
 abstractpage.pdf: abstract.tex abstractpage.tex
 	${LATEX} abstractpage

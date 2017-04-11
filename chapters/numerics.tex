@@ -7,6 +7,7 @@
 \newcommand{\FF}{\mathcal{F}}
 \renewcommand{\SS}{\mathcal{S}}
 \newcommand{\dual}[1]{*\!\! #1}
+\newcommand{\dualt}[1]{*\! #1}
 
 % Math:
 
@@ -58,7 +59,31 @@ In \eq{action} $R$ is the Ricci scalar of the metric tensor $g_{\mu\nu}$, $F_{\m
    \end{equation}  
    \eq{consSE} expresses local conservation of energy and momentum.
    
-\subsection{Matter Content}
+   \subsection{3+1 Splitting of Spacetime}
+   
+   It can be very useful to split tensors into their space-like and time-like components.  This is referred to as $3+1$ splitting or the Arnott-DeWitt-Misner (ADM) form  (CITE).  We first introduce the unit time-like normal vector $n^\mu$, normal to surfaces of constant time $t$:
+   \begin{equation}
+   	n_\mu \propto \partial_\mu t\ , \qquad g_{\mu\nu}n^\mu n^\nu = -1\ .
+   \end{equation}
+   Such a vector can be written as $n_\mu = (-\alpha, 0, 0, 0)$, where the normalization factor $\alpha$ is the \emph{lapse}.  The contravariant components are $n^\mu = (1/\alpha, -\beta^i/\alpha)$ where $\beta^i$ is the \emph{shift}.  A spatial metric $\gamma_{\mu\nu}$ can be constructed by projecting $n^\mu$ out of the metric tensor.  The result is:
+   \begin{equation}
+   	\gamma_{\mu\nu} = n_\mu n_\nu + g_{\mu\nu}\ .
+   \end{equation}
+   One can decompose the metric tensor into the 3+1 quantities $\alpha$, $\beta^i$, and $\gamma_{ij}$.  The line element takes the ADM form:
+   \begin{equation}
+   	ds^2 = -\alpha^2 dt^2 + \gamma_{ij}\left(dx^i + \beta^idt\right)\left(dx^j + \beta^jdt\right)\ .
+   \end{equation}
+   The inverse metric takes the form:
+   \begin{equation}
+   	g^{\mu\nu} = \begin{pmatrix} -\alpha^{-2} & \alpha^{-2}\beta^j \\
+							\alpha^{-2}\beta^i & \gamma^{ij} - \alpha^{-2}\beta^i \beta^j \end{pmatrix}\ .
+   \end{equation}
+   A \emph{spatial} vector is any vector $v^\mu$ such that $n_\mu v^\mu = 0$, or equivalently $v^0 = 0$.  A spatial vector has only three independent components: the spatial components $v^i$.  These spatial components may be raised and lowered with the spatial metric $\gamma_{ij}$.  By defining $\gamma \equiv \det \gamma_{ij}$ we can decompose the volume element:
+   \begin{equation}
+   	\sqrt{-g} = \alpha \sqrt{\gamma} \ .
+   \end{equation}
+   
+\subsection{Matter Content and Hydrodynamics}
 
    The matter Lagrangian $\LL_M$ and its equations of motion are complicated functions of many interacting fields.  At macroscopic scales the fields can be described as a large number $N \gg 10^{23}$ of discrete interacting particles.  In this work we avoid dealing directly with the particle equations of motion and instead work in the \emph{fluid approximation}.    In this approximation the ensemble of particles is locally described by a number density $n(x)$, a four velocity $u^\mu(x)$, and a temperature $T(x)$.  Symmetries of $\LL_M$ correspond to conservation laws which must still be obeyed in the fluid description.  Of particular use is the conservation of baryon number, which requires the local number density of baryons $n_b(x)$ to obey a continuity equation:
    \begin{equation}
@@ -79,14 +104,26 @@ In this frame the metric tensor takes the form $g_{\hat{\mu}\hat{\nu}} = \text{d
 \end{equation}
 The pressure and internal energy are functions of the local density and temperature, which must be determined from the properties of the particular fluid under consideration.  These relationships are referred to as the equation of state of the fluid.
 
-\subsection{Electromagnetic Content}
+\subsection{Electromagnetic Content and MHD}
+
+The field strength tensor $F^{\mu\nu}$ is antisymmetric, $F^{\nu\mu} = -F^{\mu\nu}$, and has six independent components corresponding to the three components each of the electric and magnetic fields $E^\mu$ and $B^\mu$.  Decomposing $F^{\mu\nu}$ into electric and magnetic fields is a frame-dependent procedure.  Elementary electromagnetism teaches us that observers moving with relative velocities will observe different electric and magnetic fields.  The fields in the coordinate frame are defined by:
+\begin{align}
+	E^\mu = n_\nu F^{\mu\nu} \quad \text{and} \quad B^\mu = n_\nu \dual{F}^{\nu\mu}\ .
+\end{align}
+The electric and magnetic fields are spatial vectors: $n_\mu E^\mu = n_\mu n_\nu F^{\mu\nu} = 0$ due to the antisymmetry of $F^{\mu\nu}$ and $\dualt{F}^{\mu\nu}$. They each have three independent components $E^i$ and $B^i$, totaling to the six components of $F^{\mu\nu}$.  The decomposition of $F^{\mu\nu}$ and $\dualt{F}^{\mu\nu}$ into electric and magnetic fields is:
+\begin{align}
+	F^{\mu\nu} &= n^\mu E^\nu - n^\nu E^\mu + \eps^{\mu\nu\sigma\lambda}n_\sigma B_\lambda\ , \\
+	\dualt{F}^{\mu\nu} &= B^\mu n^\nu - B^\nu n^\mu + \eps^{\mu\nu\sigma\lambda}n_\sigma E_\lambda\ .
+\end{align}
+The four velocity of an observer serves as their local time-like unit vector.  Hence this same decomposition can be done for \emph{any} observer merely by substituting their four velocity $u^\mu$ for $n^\mu$ and renaming the fields, for instance to $e^\mu$ and $b^\mu$.
+
 
 \section{Hyperbolic Equations}
 
 We have established that an ideal astrophysical plasma will obey the equations of general relativistic magnetohydrodynamics (GRMHD):
 \begin{align}
 	\nabla_\mu  \rho u^\mu &= 0\ , \eqlabel{GRMHD1}\\
-	\nabla_\mu T^{\mu\nu} &= 0 , \eqlabel{GRMHD2}\\
+	\nabla_\mu T^{\mu\nu} &= 0\ , \eqlabel{GRMHD2}\\
 	\nabla_\mu \dual{F}^{\mu\nu} &= 0\ . \eqlabel{GRMHD3}
 \end{align}
 These equations all take the form of conservation laws and form a system of non-linear hyperbolic partial differential equations.  The numerical solution of hyperbolic systems of equations is a rich field of numerical analysis.  For our purposes we will focus on \emph{finite volume} schemes.  To do so we must first establish the integral form of Equations (\eqref{GRMHD1}-\eqref{GRMHD3}).  We begin by expressing the covariant derivatives as coordinate derivatives, which put (\eqref{GRMHD1}-\eqref{GRMHD3}) in the form:

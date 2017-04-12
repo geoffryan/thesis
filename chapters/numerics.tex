@@ -51,7 +51,7 @@ In \eq{action} $R$ is the Ricci scalar of the metric tensor $g_{\mu\nu}$, $F_{\m
   \begin{align}
 	G_{\mu\nu} &= 8\pi T_{\mu\nu} \eqlabel{einstein} \ , \\
 	\text{where } G_{\mu\nu} &= R_{\mu\nu} - \frac{1}{2}g_{\mu\nu} R \ , \\
-	\text{and } T_{\mu\nu} &= \frac{-2}{\sqrt{-g}} \frac{\delta}{\delta g^{\mu\nu}}\left(\sqrt{-g}\left( \LL_M + \LL_{EM} \right)\right) \ .
+	\text{and } T_{\mu\nu} &= \frac{-2}{\sqrt{-g}} \frac{\delta}{\delta g^{\mu\nu}}\left(\sqrt{-g}\left( \LL_M + \LL_{EM} \right)\right) \ . \eqlabel{defTmunu}
    \end{align} 
    The Einstein tensor $G^{\mu\nu}$ also obeys a Bianchi identity $\nabla_\mu G^{\mu\nu}=0$. By the Einstein Field Equations \eqrefp{einstein}, the stress-energy tensor $T^{\mu\nu}$ must obey the same identity:
    \begin{equation}
@@ -108,16 +108,59 @@ The pressure and internal energy are functions of the local density and temperat
 
 The field strength tensor $F^{\mu\nu}$ is antisymmetric, $F^{\nu\mu} = -F^{\mu\nu}$, and has six independent components corresponding to the three components each of the electric and magnetic fields $E^\mu$ and $B^\mu$.  Decomposing $F^{\mu\nu}$ into electric and magnetic fields is a frame-dependent procedure.  Elementary electromagnetism teaches us that observers moving with relative velocities will observe different electric and magnetic fields.  The fields in the coordinate frame are defined by:
 \begin{align}
-	E^\mu = n_\nu F^{\mu\nu} \quad \text{and} \quad B^\mu = n_\nu \dual{F}^{\nu\mu}\ .
+	E^\mu = n_\nu F^{\mu\nu} \quad \text{and} \quad B^\mu = n_\nu \dual{F}^{\nu\mu}\ . \eqlabel{defEB}
 \end{align}
 The electric and magnetic fields are spatial vectors: $n_\mu E^\mu = n_\mu n_\nu F^{\mu\nu} = 0$ due to the antisymmetry of $F^{\mu\nu}$ and $\dualt{F}^{\mu\nu}$. They each have three independent components $E^i$ and $B^i$, totaling to the six components of $F^{\mu\nu}$.  The decomposition of $F^{\mu\nu}$ and $\dualt{F}^{\mu\nu}$ into electric and magnetic fields is:
 \begin{align}
-	F^{\mu\nu} &= n^\mu E^\nu - n^\nu E^\mu + \eps^{\mu\nu\sigma\lambda}n_\sigma B_\lambda\ , \\
+	F^{\mu\nu} &= n^\mu E^\nu - n^\nu E^\mu + \eps^{\mu\nu\sigma\lambda}n_\sigma B_\lambda\ , \eqlabel{FEB}\\
 	\dualt{F}^{\mu\nu} &= B^\mu n^\nu - B^\nu n^\mu + \eps^{\mu\nu\sigma\lambda}n_\sigma E_\lambda\ .
 \end{align}
 The four velocity of an observer serves as their local time-like unit vector.  Hence this same decomposition can be done for \emph{any} observer merely by substituting their four velocity $u^\mu$ for $n^\mu$ and renaming the fields, for instance to $e^\mu$ and $b^\mu$.
 
+  We can use \eq{defTmunu} to find the stress energy tensor for the electromagnetic field:
+  \begin{equation}
+  	T^{\mu\nu}_{EM} = F^{\mu\sigma} F^\nu_\sigma - \frac{1}{4}g^{\mu\nu}F^{\sigma \lambda}F_{\sigma\lambda}\ . \eqlabel{TEMF}
+  \end{equation}
+  In terms of $E^\mu$ and $B^\mu$ the stress tensor is:
+  \begin{equation}
+  	T^{\mu\nu}_{\text{EM}} = \left(n^\mu n^\nu + \frac{1}{2}g^{\mu\nu}\right)\left(E^2 + B^2\right) - E^\mu E^\nu - B^\mu B^\nu - \left(n^\mu \eps^{\nu \sigma \lambda \rho} + n^{\nu}\eps^{\mu \sigma \lam \rho}\right)n_\sig E_\lam B_\rho\ . \eqlabel{TEMEB}
+  \end{equation}
+  In many astrophysical situations the plasma under consideration has very little resistivity: any electric field in the fluid frame $u^\mu$ is quickly neutralized due to motion of electrons.  The length scale on which a plasma may have appreciable net charge density $q$ (and hence electric field) before this screening occurs is the \emph{Debye length} $\lam_{\text{Deb}} \propto \sqrt{T/q}$.  On scales larger than $\lam_{\text{Deb}}$ we can assume the plasma is neutral and has no electric field in the fluid frame.
   
+  This is the central assumption of \emph{magnetohydrodynamics} (MHD), and we will restrict our study to astrophysical systems where it holds.  For a fluid (plasma) with four velocity $u^\mu$, we refer to the fluid frame electric and magnetic fields as $e^\mu = u_\nu F^{\mu\nu}$ and $b^\mu = u_\nu\dualt{F}^{\nu\mu}$. The fluid frame fields are not spatial vectors (in the coordinate frame), instead they are orthogonal to the four velocity: $u_\mu e^\mu = u_\mu b^\mu = 0$.  The MHD condition is $e^\mu = 0$.  This simplifies the field strength \eqrefp{FEB} and stress energy \eqrefp{TEMEB} tensors dramatically:
+  \begin{align}
+  	F^{\mu\nu}_{\text{MHD}} &= \eps^{\mu\nu\sig\lam}u_\sig b_\lam \ , \eqlabel{FMHD} \\
+	\dualt{F}^{\mu\nu}_{\text{MHD}} &= b^\mu u^\nu - b^\nu u^\mu \ , \eqlabel{dFMHD} \\
+  	T^{\mu\nu}_{\text{MHD}} &=  b^2 u^\mu u^\nu  + \frac{1}{2}g^{\mu\nu} b^2  - b^\mu b^\nu\ . \eqlabel{TMHD}
+  \end{align}
+    Constructing $B^\mu$ from $b^\mu$ and vice versa is straightforward using the definition \eqrefp{defEB} and the projection tensor $g_{\mu\nu} + u_\mu u_\nu$:
+    \begin{align}
+    	B^\mu &= w b^\mu - \alpha b^0 u^\mu \ , \\
+	b^\mu &= \frac{1}{w}\left(B^\mu + u_\nu B^\nu u^\mu\right) \ ,
+    \end{align}
+    where $w \equiv -n_\mu u^\mu = \al u^0$ is the fluid Lorentz factor.  Two useful expressions are:
+    \begin{align}
+    	b^0 &= \frac{1}{\al} u_\mu B^\mu \ , \\
+	b^2 &\equiv g_{\mu\nu} b^\mu b^\nu = \frac{1}{w^2}\left(B^2 + \left(u_\mu B^\mu\right)^2\right) \ .
+    \end{align}
+    We can now write $\dualt{F}^{\mu\nu}_{\text{MHD}}$ in terms of $B^\mu$ and $u^\mu$:
+    \begin{equation}
+    	\dualt{F}^{\mu\nu}_{\text{MHD}} = \frac{1}{w}\left(B^\mu u^\nu - B^\nu u^\mu\right) \ .
+    \end{equation}
+    And can finally write the sourceless Maxwell Equations \eqrefp{maxwell2} in MHD:
+    \begin{align}
+    	\nabla_\mu \left[\frac{1}{w}\left(B^\mu u^\nu - B^\nu u^\mu\right)\right] = 0\ .
+    \end{align}
+    Writing these equations in terms of coordinate derivatives and splitting off the temporal part, we arrive at four equations: the constraint $\nabla \cdot B = 0$ and the evolution equations for $B^i$:
+    \begin{align}
+    	\partial_j \left( \sqrt{\gam} B^j \right) &= 0 \ , \\
+	\partial_t \left( \sqrt{\gam} B^i \right) + \partial_j \left(\sqrt{\gam}\left(B^i v^j - B^j v^i\right)\right) &= 0\ .
+    \end{align}
+    Lastly we can write down the combined stress-energy tensor for a magnetized perfect fluid in MHD.
+    \begin{equation}
+    	T^{\mu\nu} = \left(\rho h + b^2\right) u^\mu u^\nu + \left(P + \frac{1}{2}b^2\right)g^{\mu\nu} - b^\mu b^\nu \ . \eqlabel{TmunuGRMHD}
+    \end{equation}
+    This gives us all the tools we need to begin investigating these flows numerically.
 
 
 \section{Hyperbolic Equations}

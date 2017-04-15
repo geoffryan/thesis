@@ -6,6 +6,7 @@
 \newcommand{\UU}{\mathcal{U}}
 \newcommand{\FF}{\mathcal{F}}
 \newcommand{\VV}{\mathcal{V}}
+\renewcommand{\AA}{\mathcal{A}}
 \renewcommand{\SS}{\mathcal{S}}
 \newcommand{\dual}[1]{*\!\! #1}
 \newcommand{\dualt}[1]{*\! #1}
@@ -184,8 +185,13 @@ These equations are each in \emph{conservative} form
 \end{equation}
 We call $\UU$ the conserved quantity, $\FF^i$ the flux, and $\SS$ the source. The GRMHD system consists of eight such coupled equations which we can write as:
 \begin{equation}
-	\partial_t\ \!\UU_a + \partial_i \FF^i_a = \SS_a \ .
+	\partial_t\ \!\UU_a + \partial_i \FF^i_a = \SS_a \ . \eqlabel{hyperbolicsystem}
 \end{equation}
+The primitive linear hyperbolic equation is the advection equation $\partial_t u + c \partial_x u = 0$, whose solution simply translates with velocity $c$.  We can construct local solutions to \eq{hyperbolicsystem} by first putting it in the \emph{quasi-linear} form:
+\begin{equation}
+	\partial_t\ \!\UU_a + \left(\frac{\partial \FF^i_a}{\partial \UU_b}\right) \partial_i \UU_b = \SS_a \ .
+\end{equation}
+The matrix $\AA_{ab} = \partial \FF_a / \partial \UU_b$ is the \emph{flux Jacobian}.  The system \eqrefp{hyperbolicsystem} is hyperbolic if and only if the flux Jacobian is diagonalizable. (CITE)  In this case we can transform $\UU_a$ into the basis 
 
 
 We first consider a rectangular control volume $\VV$ spanning $x^1\in [x^1_-, x^1_+]$,  $x^2\in [x^2_-, x^2_+]$, and  $x^3\in [x^3_-, x^3_+]$.

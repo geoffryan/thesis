@@ -1,0 +1,25 @@
+\renewcommand{\chapid}{future}
+
+% Chapter specific commands:
+
+% Math:
+
+\chapter{Future Directions \chaplabel{future}}
+
+Here we briefly summarize future directions for the work presented in this thesis.
+
+\section{Numerical Methods}
+
+The \disco\ shearing mesh is of great advantage when fluid motion is dominantly in the azimuthal direction.  This is completely satisfied by a Keplerian disk above the ISCO.  However, for relativistic problems the region below the ISCO where fluid plunges and the poles where there may be an outflow or jet are often of interest.  For these more complicated problems, the advantage of the moving mesh as it stands is tempered.
+
+A straightforward resolution to this problem is to allow the mesh to move in more than one dimension.  To keep the technical advantages of \disco, the mesh motion cannot be arbitrary.  We desire cell faces to always be coordinate surfaces, determining neighbours to be simple (take linear time), and to not be required to add cells on-the-fly.  The most general scheme which fits these constraints is one where the discretization is such that (taking the \disco\ $r\phi z$ grid as an example):
+\begin{enumerate}
+	\item Space is foliated by $N_z$ surfaces of constant $z$.  Cells will live in sheets in between these surfaces.
+	\item Each sheet is foliated by $N_r(z)$ surfaces of constant $r$, dividing the sheet up into concentric annuli.
+	\item Each annulus is divided by $N_\phi(r,z)$ surfaces of constant $\phi$, defining the boundaries of individual cells.
+\end{enumerate}
+Mesh motion here can be accomplished by allowing each $\phi$, $r$, and $z$ surface to move independently.  When a surface of constant $r$ moves the \emph{entire} annulus moves, as all cells in the annulus share the same $r$ surface.  When a surface of constant $z$ moves the entire sheet moves as a unit, as all cells in the sheet share the same $z$ surface.
+
+This scheme does not require cylindrical coordinates, in fact it can be written in arbitrary coordinates $(x^1, x^2, x^3)$.  If such a scheme were used in an accretion disk simulation, entire annuli could free fall through the ISCO or get lifted in jets.  If the disk heats and expands vertically the mesh could breathe with it.  At the very least this scheme may offer significant time step advantages for 3D disk simulations, where the timestep is dominated by the near light-like velocities of gas at the event horizon.
+
+The energy variable $\tau_U$ has been of great benefit in \grdisco.  Under a similar operation, one could use different spatial basis vectors to calculate the conserved momentum and/or magnetic fields.  Such a scheme could, perhaps, be used to circumvent the notorious problems of the coordinate singularity at $r=0$ by expressing $T^0_i$ and $B^i$ in a basis which is Cartesian (and hence well-defined) near the pole but cylindrical (and angular momentum conserving) away from it.

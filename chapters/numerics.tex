@@ -10,6 +10,7 @@
 \renewcommand{\SS}{\mathcal{S}}
 \newcommand{\dual}[1]{*\!\! #1}
 \newcommand{\dualt}[1]{*\! #1}
+\newcommand{\Risco}{R_{\rm ISCO}}
 
 % Math:
 
@@ -195,6 +196,130 @@ The matrix $\AA_{ab} = \partial \FF_a / \partial \UU_b$ is the \emph{flux Jacobi
 
 
 We first consider a rectangular control volume $\VV$ spanning $x^1\in [x^1_-, x^1_+]$,  $x^2\in [x^2_-, x^2_+]$, and  $x^3\in [x^3_-, x^3_+]$.
+
+\section{The \grdisco\  Code}
+
+\subsection{Breaking Up With The Coordinate Basis}
+
+By convenience, both indices of the stress energy tensor $T^{\mu\nu}$ are usually assumed to live in the same coordinate basis.  This is essential, for instance, to use the symmetry $T^{\mu\nu} = T^{\mu\nu}$.
+
+Numerically, we have found it is advantageous to consider the mixed rank tensor $T^\mu_\nu$.  In this form the symmetrical nature of ${\bf T}$ is not manifest, but its conservation law takes on a particularly nice form when expressed in coordinate derivatives:
+\begin{equation}
+	\partial_\mu \sqrt{-g} T^\mu_\nu = \frac{1}{2}\sqrt{-g}T^{\alpha}{\beta}\partial_\nu g_{\alpha \beta}\ .
+\end{equation}
+In this form, the source term of the equation for $T^0_\nu$ is 0 if $\partial_\nu g_{\alpha \beta} = 0$.  This explicitly builds translational killing vectors into our numerical schemes if we take the conserved quantities to be $T^0_\nu$ and not $T^{0\nu}$, for instance.  This usage of $T^\mu_\nu$ is more akin to the standard construction in which the stress energy tensor is introduced where the $\mu$'th $\nu$'th component of ${\bf T}$ corresponds to the flux in the $\mu$'th direction of the $\nu$'th component of momentum.  In this construction the first and second indices of ${\bf T}$ correspond physically to very different objects.
+
+A priori there is no reason to assume the basis in which we identify the components of the momentum is the same in which we are expressing fluxes.  Fluxes, corresponding to the upper index of $T^\mu_\nu$, are for our numerical purposes oriented along coordinate surfaces, and hence are always expressed in the coordinate basis.  The momentum components, however, may be expressed in any basis we like.  
+
+The energy variable $\tau$ already does this, in fact, by projecting ${\bf T}$ along the timelike normal: $\tau = -n^\nu T^0_\nu - D$.  We have found it very beneficial to consider energy variables defined in a different basis altogether.  Only speaking of the energy equation, one simply needs to specify a timelike unit vector to project against ${\bf T}$.  For some such vector $U^\mu$ we have $g_{\mu\nu}U^\mu U^\nu = -1$ and can write the energy equation as:
+\begin{align}
+	\nabla_\mu \left( -U_\nu T^{\mu\nu}\right) &= -T^{\mu\nu}\nabla_\mu U_\nu \\
+\implies \quad	\partial_\mu \sqrt{-g} \left(-U_\nu T^{\mu\nu}\right) &= -\frac{1}{2}\sqrt{-g}T^{\mu\nu}U^\sig\partial_\sig g_{\mu\nu} - \sqrt{-g}T^\mu_\nu \partial_\mu U^\nu \eqlabel{UTmunu}
+\end{align}
+So long as $U^\mu(x^\al)$ is known exactly the derivatives $\partial_\mu U^\nu$ can be calculated and \eq{UTmunu} is a good first order conservation law.  The conserved quantity defines our variable energy variable $\tau_U = -U^\nu T^0_\nu - D$.
+
+Although somewhat complicated, picking a good $U^\mu$ can simplify a problem immensely when the flow is supersonic.  This is because projecting onto $U^\mu$ is equivalent to measuring the energy in a frame moving with four velocity $U^\mu$.  If $U^\mu$ can be chosen to be close to the fluid velocity, then $\tau_U$ will be dominated by the internal energy density as the kinetic energy density is zero in the co-moving frame.  This greatly aids in primitive variable inversion as it increases the numerical precision of the recovered internal energy by several orders of magnitude.
+
+A particularly useful $U^\mu$ for thin disks is a congruence of equatorial Keplerian geodesics $U^\mu_{geo}$.  This velocity field is the steady state solution to the equations of motion for cold particles, and as such is very close to the velocity field of thin accretion disks.  Inside the ISCO the four velocity is plunging with constant $U_\phi$ and $U_0$.  The interior $U^r$ can then be determined from the four velocity normalization. To smoothly match with the exterior Keplerian solution $U_\phi$ and $U_0$ must match the Keplerian values at the ISCO.  In the Schwarzschild metric in Kerr-Schild coordinates this takes the form:
+\begin{align}
+	U^0_{geo} &= \left \{ \begin{matrix} \frac{2\sqrt{2}/3}{1-2M/r} & r < 6M \\
+						\frac{1}{\sqrt{1-3M/r}} & r > 6M \end{matrix} \right . , \nonumber \\
+	U^r_{geo} &= \left \{ \begin{matrix} -\frac{1}{3}\sqrt{\frac{6M}{r}-1} & r < 6M \\
+						0 & r > 6M \end{matrix} \right . , \nonumber \\
+	U^\phi_{geo} &= \left \{ \begin{matrix}  \frac{2 \sqrt{3} M}{r^2} & r < 6M \\
+						\sqrt{\frac{M/r^3}{1-3M/r}} & r > 6M \end{matrix} \right . . \eqlabel{Ugeo}
+\end{align}
+The same calculation can be carried out in the equatorial Kerr metric, bearing similar but far more complicated results.  Using this $U^\mu_{geo}$ frame to measure the fluid energy is essential for stably evolving high mach number accreting flows, as shown in \sect{test:kep}.  This frame was put to practical effect in studying minidisks, which will be discussed further in \chap{minidisk}.
+
+\section{Code Tests}
+
+We ran \grdisco\ through a battery of test problems to analyze its performance and accuracy.  These are often hydrodynamic problems with an exact solution, or a solution that can be calculated numerically through other reliable means.  Some of these tests are to demonstrate the second order convergence of the code, others highlight the efficacy of particular features.
+
+\subsection{Isentropic Wave}
+
+The one dimensional isentropic wave provides a smooth solution for which its possible to test the overall convergence of the hydrodynamic scheme.  Our particular implementation of the test matches that in \ram\ \citep{Zhang06}.  The spacetime is flat and the solution is expressed in Cartesian coordinates $(t,x)$.  The initial density profile is a pulse of width $L$, amplitude $\al$, and ambient density $\rho_0$:
+\begin{equation}
+	\rho(x) = \left\{\begin{matrix} \rho_0\left[1 + \alpha \left(x^2/L^2-1\right)^4\right]\ , & \text{if } |x| < L \\
+							\rho_0\ , & \text{otherwise} \end{matrix} \right . \ .
+\end{equation}
+The pressure at any time is obtained by setting an ambient value $P_0$ and assuming uniform entropy:
+\begin{equation}
+	P(x) = P_0 \left(\frac{\rho(x)}{\rho_0}\right)^\Gam\ .
+\end{equation}
+The isentropic wave is a solution where one of the Riemann invariants $J_\mp$ is a constant:
+\begin{equation}
+	J_\mp = \frac{1}{2}\log\left(\frac{1+v}{1-v}\right) \pm \frac{1}{\sqrt{\Gam-1}}\log \left(\frac{\sqrt{\Gam-1} + c_s}{\sqrt{\Gam-1}-c_s}\right)\ ,
+\end{equation}
+which can be used to obtain the velocity $v(x,t)$ given an ambient velocity $v_0$.  In the isentropic wave with constant $J_\mp$, the fluid variables are all advected along the characteristic $\lambda_\pm$. For example:
+\begin{align}
+	\rho(x,t) &= \rho(x - \lambda_\pm t, 0) \ , \eqlabel{isenExact} \\
+	\text{where } \lambda_\pm &= \frac{v \pm c_s}{1\pm v c_s}\ .
+\end{align} 
+We ran a linear isentropic wave over a two-dimensional cylindrical grid: $r\in[0.05,4]$, $\phi\in[0,2\pi)$.  In this way the isentropic wave is a two dimensional test: radial and azimuthal fluxes must balance as the wave travels obliquely over the grid.  Following \citet{Zhang06} we set $\rho_0 =1$, $P_0=100$, $v_0=0$, and $\Gam=5/3$.  The wave is initialized at $t=0$, centered at $x=1$ with $L=0.3$ and $\al=1$.  The simulation is run to $t=0.8$, just before the wave steepens into a shock.  Radial outflow boundaries were used at the inner and outer boundaries, the comparison with the exact solution is performed in the box $x\in[0.5,2]$, $y\in[-0.5,0.5]$ where boundary effects do not disturb the solution. Five simulations were performed with $N_r = 64, 128, 256, 512, 1024$ and $N_\phi$ chosen to maintain square cells.  The Riemann solver is HLLC, the CFL number is 0.5, and the slope limiter has $\theta=1.5$.
+
+\begin{figure}
+\begin{center}
+	\includegraphics[width=0.65\textwidth]{figures/numerics/isen_1024.png}
+\end{center}
+\caption{Isentropic wave density $\rho(x)$ at $t=0.8$ for $N_r=1024$ (blue dots), exact solution (grey line), and initial condition (black line).  Despite running obliquely over the cylindrical grid, the wave maintains plane symmetry and matches the exact solution. \figlabel{isen:comp}}
+\end{figure}
+\begin{figure}
+\begin{center}
+	\includegraphics[width=0.65\textwidth]{figures/numerics/isen_conv.pdf}
+\end{center}
+\caption{$L_1$ error in the entropy $s$ as a function of $N_r$ for the isentropic wave.  The grey dashed line is a visual reference showing the expected convergence rate $N^{-2}_r$.  \figlabel{isen:conv}}
+\end{figure}
+
+\fig{isen:comp} shows density at the final time compared with the exact solution.  The agreement with the exact solution is quite good and the lack of dispersion in the data indicates that planar symmetry has been maintained.  To quantify the discrepancy we calculate the $L_1$ error of the entropy:
+\begin{equation}
+	L_1[s] = \sum_i |s(x_i)-s_0| \Delta A_i\ ,
+\end{equation}
+where $s(x_i)$ is the entropy of cell $i$, $s_0$ is the ambient (uniform) entropy, $\Delta A_i$ is the area of cell $i$ and the sum is over cells contained in the comparison box.  \fig{isen:conv} plots $L_1[s]$ versus $N_r$ and clearly shows the expected second order convergence.
+
+\subsection{Keplerian Orbit and Inflow}
+\sectlabel{test:kep}
+
+This test checks the behaviour of thin accreting disks within the ISCO and demonstrates the efficacy of the energy variable $\tau_U$.  The initial condition is a uniform density disk $\rho(r)=\rho_0$ with uniform pressure $P(r) = P_0 \ll \rho_0$ in the Schwarzschild metric.  The velocity field $u^\mu(r)$ is equal to the geodesic velocity field $U^\mu_{geo}$ defined in \eq{Ugeo}: Keplerian outside the ISCO and smoothly plunging inside.  Outside the ISCO the gas is in a steady state.  Within this ISCO the gas should plunge according to $u^\mu(r)$, which should remain constant so long as $P \ll \rho$.
+
+The analytic solution is given by an advection problem with non-uniform velocity profile.  Define $V = U^r / U^0$ and $F = r \rho V$. Then the continuity equation becomes:
+\begin{equation}
+	\frac{1}{V}\partial_t F + \partial_r F = 0\ . \eqlabel{kep:adveq}
+\end{equation}
+For $r > \Risco$ the velocity $V=0$ and $F(r,t)$ is a constant.  For $r < \Risco$ the solution for $F$ is:
+\begin{align}
+	F(r,t) &= F(r_0, 0)\ , \\
+	\text{where } t &= -\int_r^{r_0} \frac{dr}{V(r)}\ .
+\end{align}
+This gives the solution for $\rho$ and $P$:
+\begin{align}
+	\rho(r,t) = \frac{r_0 V(r_0)}{r V(r)} \rho_0 \ , \\
+	P(r,t) = P_0 \left(\frac{\rho(r,t)}{\rho_0}\right)^\Gam\ .
+\end{align}
+This one dimensional problem was run with $\rho_0 = 1.0$ and $P_0 = 10^{-4}$ on the domain $r\in[1.5M, 12M]$ in Kerr-Schild coordinates for $\Delta t = 96.344M$, where $M$ is the mass of the black hole.  This time span corresponds to a single orbit at $\Risco = 6M$.  The outer boundary was fixed, and the inner boundary was a hybrid boundary condition with $u^\mu = U^\mu_{geo}$ and $\rho$ and $P$ set to ensure isentropic infall with constant $\dot{M} \propto r\rho u^r$. We used the HLLC Riemann solver, a CFL number of 0.2, a PLM $\theta=1.5$, and $N_r = 384$ radial cells.
+
+\begin{figure}
+\begin{center}
+	\includegraphics[width=0.6\textwidth]{figures/numerics/kep_rho.pdf}
+\end{center}
+\caption{Density in the Keplerian flow test at $t\approx96M$.  Exact solution in black, numerical solution with $\tau$ energy variable in orange with dots, numerical solution with $\tau_U$ energy variable in orange with dots.  The $\tau_U$ energy variable is measured in a local Keplerian frame and stably evolves the solution.  Shaded grey area is the event horizon, dashed grey line is the ISCO. \figlabel{kep:rho}}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+	\includegraphics[width=0.6\textwidth]{figures/numerics/kep_mach.pdf}
+\end{center}
+\caption{Mach number $\mathcal{M} = |u|/c_s$ in the Keplerian flow test at $t\approx96M$, labelling identical to \fig{kep:rho}.   \figlabel{kep:mach}}
+\end{figure}
+
+\fig{kep:rho} and \fig{kep:mach} show density $\rho$ and Mach number $\mathcal{M} = |u|/c_s$ in the Keplerian flow test for two energy variables: the standard $\tau$ and our co-moving variable $\tau_U$ using the geodesic frame $U_{geo}$.  The Mach number of this flow is comparable to an x-ray binary or other thin sub-Eddington accretion disks.  The $\tau$ variable completely fails within the ISCO: improperly reconstructed pressures result in wild instabilities which disrupt the density.  The $\tau_U$ variable enables smooth evolution, even up to Mach numbers $\sim 10^3$ where the thermal energy is $\sim 10^{-6} = \mathcal{M}^{-2}$ of the kinetic.  The sharp cusp of the analytic solution $\Risco$ is difficult to resolve as it creates a large pressure gradient which can transport gas inwards.  Realistic disks will always have some form of angular momentum transport, so this is not an issue.
+
+\subsection{Cartesian Shear Flow}
+\subsection{Novikov--Thorne Steady State}
+\subsection{Neutrino Dominated Accretion Flow Steady State}
+\subsection{Magnetic Field Loop Advection}
+\subsection{Magnetic Blastwave}
+\subsection{Linear MRI}
+
 %%%%%%
 % Summary %
 %%%%%%

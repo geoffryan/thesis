@@ -23,3 +23,22 @@ Mesh motion here can be accomplished by allowing each $\phi$, $r$, and $z$ surfa
 This scheme does not require cylindrical coordinates, in fact it can be written in arbitrary coordinates $(x^1, x^2, x^3)$.  If such a scheme were used in an accretion disk simulation, entire annuli could free fall through the ISCO or get lifted in jets.  If the disk heats and expands vertically the mesh could breathe with it.  At the very least this scheme may offer significant time step advantages for 3D disk simulations, where the timestep is dominated by the near light-like velocities of gas at the event horizon.
 
 The energy variable $\tau_U$ has been of great benefit in \grdisco.  Under a similar operation, one could use different spatial basis vectors to calculate the conserved momentum and/or magnetic fields.  Such a scheme could, perhaps, be used to circumvent the notorious problems of the coordinate singularity at $r=0$ by expressing $T^0_i$ and $B^i$ in a basis which is Cartesian (and hence well-defined) near the pole but cylindrical (and angular momentum conserving) away from it.
+
+\section{Black Hole Accretion Disks}
+
+The Kerr parameter of black holes in x-ray binaries is typically measured through continuum fitting to a Novikov--Thorne model or by the iron $K\al$ line.  The excess shock dissipation seen in minidisks could very well be present in x-ray binaries and may bias spin measurements upwards.  A detailed study of the strength of this effect is warranted.
+
+Kilonova are the most likely electromagnetic counterpart to a LIGO source to be observed in the near future. Many key observational characteristics of their emission are still uncertain, particularly how bright the emission from disk winds are.  A good calculation in 3D GRMHD with a physical equation of state and neutrino cooling could greatly elucidate the question.
+
+Tidal excitation of spiral waves, a detailed analysis.  What determines the wave strength? How does it depend on Mach number? Dependence on disk profile, cooling prescription.  Can this be an effect for \emph{realistic} disks?
+
+\section{Binary Black Hole Accretion}
+
+A global characterization of BBH accretion, at least when the circumbinary disk and BH orbital plane are aligned.  A more semi-analytic project, this would use the latest simulation results to inform a model of steady circumbinary accretion. Characterize accretion rate and angular momentum transport rate by fiducial system lifetimes and determine under what conditions disks are thin, slim, or super-Eddington.
+
+Using approximate BBH metric, calculate gas flow in final orbits before merger. Examine to what extent gas gets decoupled from BH evolution, characterize nearby gas right before merger.  
+
+Disk response to BH recoil: using final state of merger runs, replace binary BH with recoiling single and examine disk response.  Prompt emission and shocks?  Under what circumstances?   
+
+In general there is no reason to expect a circumbinary disk to be aligned with the black hole orbital plane.  Examine what can happen if gas and BHs are misaligned.  How strong is the alignment torque? What do minidisks align with?
+

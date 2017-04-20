@@ -8,15 +8,21 @@
 \newcommand{\VV}{\mathcal{V}}
 \renewcommand{\AA}{\mathcal{A}}
 \renewcommand{\SS}{\mathcal{S}}
+\newcommand{\PP}{\mathcal{P}}
+\newcommand{\UUU}{\mathrm{U}}
+\newcommand{\FFF}{\mathrm{F}}
+\newcommand{\SSS}{\mathrm{S}}
 \newcommand{\dual}[1]{*\!\! #1}
 \newcommand{\dualt}[1]{*\! #1}
 \newcommand{\Risco}{R_{\rm ISCO}}
+\newcommand{\sgn}{\mathrm{sgn}}
+\newcommand{\CFL}{\mathtt{CFL}}
 
 % Math:
 
 \chapter{Numerical Relativistic Hydrodynamics\chaplabel{numerics}}
 
-This Chapter presents ongoing work with Paul Duffell and Andrew MacFadyen which will be incorporated into a future publication upon the public release of the GRMHD \Disco\ code.
+This Chapter presents ongoing work with Paul Duffell and Andrew MacFadyen which will be incorporated into a future publication upon the public release of \grdisco, a GRMHD extension to the \disco code written by Paul Duffell.
 
 %%%%%
 % Abstract
@@ -24,7 +30,7 @@ This Chapter presents ongoing work with Paul Duffell and Andrew MacFadyen which 
 
 \section{Chapter Abstract}
 
-We formulate and review the system of equations relevant for astrophysical fluid flow, particularly in a relativistic context.  We develop numerical methods for solving these equations in the finite volume formulation, with a particular focus on schemes which allow for a moving numerical mesh.  
+We formulate and review the system of equations relevant for astrophysical fluid flow, particularly in a relativistic context.  We develop numerical methods for solving these equations in the finite volume formulation, with a particular focus on schemes which allow for a moving numerical mesh.  These schemes are implemented in \grdisco, a new three dimensional massively parallel general relativistic magnetohydrodynamics code with a moving, shearing mesh.  We run \grdisco\ through a series of tests demonstrating its accuracy and efficacy for many problems of astrophysical fluid dynamics.  \grdisco is freely available at \url{https://github.com/geoffryan/Disco.git}.
 
 %%%%%
 %Section 1 - Introduction
@@ -64,7 +70,7 @@ In \eq{action} $R$ is the Ricci scalar of the metric tensor $g_{\mu\nu}$, $F_{\m
    
    \subsection{3+1 Splitting of Spacetime}
    
-   It can be very useful to split tensors into their space-like and time-like components.  This is referred to as $3+1$ splitting or the Arnott-DeWitt-Misner (ADM) form  (CITE).  We first introduce the unit time-like normal vector $n^\mu$, normal to surfaces of constant time $t$:
+   It can be very useful to split tensors into their space-like and time-like components.  This is referred to as $3+1$ splitting or the Arnott-DeWitt-Misner (ADM) form \citep{ADM}.  We first introduce the unit time-like normal vector $n^\mu$, normal to surfaces of constant time $t$:
    \begin{equation}
    	n_\mu \propto \partial_\mu t\ , \qquad g_{\mu\nu}n^\mu n^\nu = -1\ .
    \end{equation}
@@ -94,7 +100,7 @@ In \eq{action} $R$ is the Ricci scalar of the metric tensor $g_{\mu\nu}$, $F_{\m
    \end{equation}
   The fluid approximation reduces the description of matter to five degrees of freedom: the number density, the temperature, and the three independent components of the fluid velocity.  The continuity equation \eqrefp{contnb} plus the four equations of energy-momentum conservation \eqrefp{consSE} then provide enough constraints to solve the system so long as it is possible to express the stress-energy tensor $T^{\mu\nu}$ in terms of $n$, $T$, and $u^\mu$ alone, avoiding direct consideration of the material equations of motion.
   
-  Consider a gas of particles of mass $m$ in a local rest frame. The gas has mass density $\rho = m n$, thermodynamic pressure $P(n,T)$, and internal energy density $u(n,T)$.  We define the total energy density $e = \rho + u$ and the specific energy density $\eps = u / \rho$.  Relativistic kinetic theory establishes (CITE) that In a local orthonormal frame the stress-energy tensor has components:
+  Consider a gas of particles of mass $m$ in a local rest frame. The gas has mass density $\rho = m n$, thermodynamic pressure $P(n,T)$, and internal energy density $u(n,T)$.  We define the total energy density $e = \rho + u$ and the specific energy density $\eps = u / \rho$.  Relativistic kinetic theory establishes that In a local orthonormal frame the stress-energy tensor has components \citep{RezzollaZanotti}:
   \begin{equation}
   	T^{\hat{\mu}\hat{\nu}} = \begin{pmatrix} e & 0 & 0 & 0 \\
 									0 & P & 0 & 0 \\
@@ -148,7 +154,7 @@ The four velocity of an observer serves as their local time-like unit vector.  H
     \end{align}
     We can now write $\dualt{F}^{\mu\nu}_{\text{MHD}}$ in terms of $B^\mu$ and $u^\mu$:
     \begin{equation}
-    	\dualt{F}^{\mu\nu}_{\text{MHD}} = \frac{1}{w}\left(B^\mu u^\nu - B^\nu u^\mu\right) \ .
+    	\dualt{F}^{\mu\nu}_{\text{MHD}} = \frac{1}{w}\left(B^\mu u^\nu - B^\nu u^\mu\right) \ . \eqlabel{FmunuMHD}
     \end{equation}
     And can finally write the sourceless Maxwell Equations \eqrefp{maxwell2} in MHD:
     \begin{align}
@@ -165,8 +171,7 @@ The four velocity of an observer serves as their local time-like unit vector.  H
     \end{equation}
     This gives us all the tools we need to begin investigating these flows numerically.
 
-
-\section{Hyperbolic Equations}
+\section{Numerical Solutions to Hyperbolic Equations: The \grdisco\ code}
 
 We have established that an ideal astrophysical plasma will obey the equations of general relativistic magnetohydrodynamics (GRMHD):
 \begin{align}
@@ -174,7 +179,7 @@ We have established that an ideal astrophysical plasma will obey the equations o
 	\nabla_\mu T^{\mu\nu} &= 0\ , \eqlabel{GRMHD2}\\
 	\nabla_\mu \dual{F}^{\mu\nu} &= 0\ . \eqlabel{GRMHD3}
 \end{align}
-These equations all take the form of conservation laws and form a system of non-linear hyperbolic partial differential equations.  The numerical solution of hyperbolic systems of equations is a rich field of numerical analysis.  For our purposes we will focus on \emph{finite volume} schemes.  To do so we must first establish the integral form of Equations (\eqref{GRMHD1}-\eqref{GRMHD3}).  We begin by expressing the covariant derivatives as coordinate derivatives, which put (\eqref{GRMHD1}-\eqref{GRMHD3}) in the form:
+In the above $T^{\mu\nu}$ is given by \eq{TmunuGRMHD} and $\dualt{F}^{\mu\nu} = \dualt{F}^{\mu\nu}_{\text{MHD}}$ given by \eq{FmunuMHD}.  These equations all take the form of conservation laws and form a system of non-linear hyperbolic partial differential equations.  The numerical solution of hyperbolic systems of equations is a rich field of numerical analysis.  For our purposes we will focus on \emph{finite volume} schemes.  To do so we must first establish the integral form of Equations (\eqref{GRMHD1}-\eqref{GRMHD3}).  We begin by expressing the covariant derivatives as coordinate derivatives, which put (\eqref{GRMHD1}-\eqref{GRMHD3}) in the form:
 \begin{align}
 	\partial_\mu \left(\sqrt{-g}\ \! \rho u^\mu\right) &= 0\ , \\
 	\partial_\mu\left( \sqrt{-g}\ \!T^{\mu}_\nu\right) &= \frac{1}{2}\sqrt{-g}\ \!T^{\alpha\beta}\partial_\nu g_{\alpha \beta}\ , \\
@@ -182,24 +187,161 @@ These equations all take the form of conservation laws and form a system of non-
 \end{align}
 These equations are each in \emph{conservative} form
 \begin{equation}
-	\partial_t\ \!\UU + \partial_i \FF^i = \SS \ .
+	\partial_t\ \!\sqrt{-g}\, u + \partial_i\, \sqrt{-g}f^i = \sqrt{-g}\,s \ .
 \end{equation}
-We call $\UU$ the conserved quantity, $\FF^i$ the flux, and $\SS$ the source. The GRMHD system consists of eight such coupled equations which we can write as:
+We call $u$ the conserved variable, $f^i$ the flux, and $s$ the source. The GRMHD system consists of eight such coupled equations which we can index with $a=1,\dots,8$:
 \begin{equation}
-	\partial_t\ \!\UU_a + \partial_i \FF^i_a = \SS_a \ . \eqlabel{hyperbolicsystem}
+	\partial_t\ \!\sqrt{-g}\, u_a + \partial_i\, \sqrt{-g}f^i_a = \sqrt{-g}\,s_a \ . \eqlabel{hyperbolicsystem}
 \end{equation}
-The primitive linear hyperbolic equation is the advection equation $\partial_t u + c \partial_x u = 0$, whose solution simply translates with velocity $c$.  We can construct local solutions to \eq{hyperbolicsystem} by first putting it in the \emph{quasi-linear} form:
+This is called the Valencia formulation of GRMHD \citep{Marti91, Banyuls97, Font08}.  It has been implemented in several codes, for instance \citealt{HARM} and \citealt{Duez05}.
+
+Each of these equations is a conservation law for $u_a$.  The fluxes $f^i_a$ and sources $s_a$ in general depend non-linearly on the entire set of $u_a$'s.  In fact, in GRMHD the functions $f^i_a(u_a)$ and $s_a(u_a)$ have no known exact form.  Instead, $u_a$, $f^i_a$, and $s_a$ are all known only as functions of the \emph{primitive} variables $\PP_a$. 
+
+In GRMHD we often take $\PP_a = (\rho, P, v^1, v^2, v^3, B^1, B^2, B^3)$ where $v^i = u^i/u^0$.  \grdisco\ also can use $u_i$ instead of $v^i$ and $T$ instead of $P$.  It will be stated when either of these alternatives are used. Once a choice of $\PP_a$ has been made, the conserved variables, fluxes, and sources terms may all be calculated.
+
+There is some freedom in the choice of conserved variables.  In particular, any linear combination of the variables in $(\eqref{GRMHD1}-\eqref{GRMHD3})$ will also be conserved.  We take $u_a = (D, T^0_1, T^0_2, T^0_3, \tau_U, B^1, B^2, B^3)$ where $D = \rho u^0$, $\tau_U \equiv -U_\mu T^{0\mu}-D$, and $U^\mu$ is an exactly known timelike unit vector.  The energy variable $\tau_U$ is a generalization of the variable $\tau = -n_\mu T^{\mu0} - D$ used in many codes \citep{HARM, Duez05}.
+
+\subsection{Finite Volume Form}
+Our numerical scheme relies on the integral form of \eq{hyperbolic system}, which is easier to stabilize and implement in non-Cartesian geometries.  
+
+Consider a rectangular control volume $\VV$ spanning $x^1\in [x^1_-, x^1_+]$,  $x^2\in [x^2_-, x^2_+]$, and  $x^3\in [x^3_-, x^3_+]$.  Let $dV=\sqrt{-g}dx^1dx^2dx^3$.  We will assume the volume can stretch in the $x^1$ direction and let $x^1_\pm = x^1_\pm(t)$.  The mass of $u_a$ in $\VV$ is:
 \begin{equation}
-	\partial_t\ \!\UU_a + \left(\frac{\partial \FF^i_a}{\partial \UU_b}\right) \partial_i \UU_b = \SS_a \ .
+	\UUU_a = \intop_\VV dV\, u_a = \int \limits_{x^1_-(t)}^{x^1_+(t)} \int \limits_{x^2_-}^{x^2_+} \int \limits_{x^3_-}^{x^3_+} dx^1dx^2dx^3 \sqrt{-g}\, u_a\ .
 \end{equation}
-The matrix $\AA_{ab} = \partial \FF_a / \partial \UU_b$ is the \emph{flux Jacobian}.  The system \eqrefp{hyperbolicsystem} is hyperbolic if and only if the flux Jacobian is diagonalizable. (CITE)  In this case we can transform $\UU_a$ into the basis 
+The time derivative of $\UUU_a$ depends on $\partial_t u_a$ and $V^1_\pm \equiv d x^1_\pm /dt$:
+ \begin{equation}
+ \frac{d}{dt}\UUU_a = \int \limits_{x^1_-}^{x^1_+} \int \limits_{x^2_-}^{x^2_+} \int \limits_{x^3_-}^{x^3_+} dx^1dx^2dx^3 \partial_t\left(\sqrt{-g}\, u_a\right) + \left .  \int \limits_{x^2_-}^{x^2_+} \int \limits_{x^3_-}^{x^3_+} dx^2dx^3 \sqrt{-g}\, V^1  u_a\right |^{x^1_+}_{x^1_-}\ .
+ \end{equation}
+ Let $dA_1 =\sqrt{-g} dx^2 dx^3$, $dA_2 = \sqrt{-g}dx^1 dx^3$, and $dA_3 = \sqrt{-g}dx^1dx^2$.   We will use $\AA_{i\pm}$ to refer to the faces $\VV$, surfaces of constant $x^i_\pm$. Inserting \eq{hyperbolicsystem} for $\partial_t \sqrt{-g} u_a$ and using Stoke's Theorem allows us to arrive at the integral equation:
+ \begin{equation}
+	\frac{d}{dt} \UUU_a = -\left .\intop_{\AA_1}dA_1 \left(f^1_a - V^1u_a\right) \right |_{x^1_-}^{x^1_+} -\left .\intop_{\AA_2}dA_2 f^2_a \right |_{x^2_-}^{x^2_+} -\left .\intop_{\AA_3}dA_3 f^3_a \right |_{x^3_-}^{x^3_+} +  \intop_\VV dV\, s_a\ . \eqlabel{integralform}
+\end{equation}
+The volumes and areas of cells and faces are defined as:
+\begin{align}
+	\Delta V &= \intop_\VV dV \ , \\
+	\Delta A_{i\pm} &= \intop_{\AA_{i\pm}} dA_i \ .
+\end{align}
+This allows us to consider the averaged quantities:
+\begin{align}
+	\UU_a &= \frac{1}{\Delta V} U_a\ , \\
+	\FF^{i\pm}_a &= \frac{1}{\Delta A_{i\pm}}  \intop_{\AA_{i\pm}} dA_i\, f^i_a \ ,  \\
+	\widehat{u}_a^{i\pm} &=  \frac{1}{\Delta A_{i\pm}}    \intop_{\AA_{i\pm}} dA_i \, u_a\ , \\
+	\SS_a &= \frac{1}{\Delta V} \intop_\VV dV\, s_a\ .
+\end{align}
+Letting the index $p=  1+, 1-, \dots, 3-$ denote the six faces of $\VV$ we can write \eq{integralform} in \emph{finite volume} form:
+\begin{equation}
+\frac{d}{dt}\left( \UU_a \Delta V\right) = -\sum_{p}\Big[\sgn(p)\big(\FF^{p} - V^{p} \widehat u_a^{p}\big)\Delta A_{p}\Big] + \SS_a \Delta V\ . \eqlabel{FVform}
+\end{equation}
+This is an exact equation for the rate of change for the mass of $u_a$ in volume $\VV$, equal to the sum of the face averaged fluxes (adjusted for the face movement) and the volume integrated source function.  The finite volume (FV) numerical schemes directly solve this equation for $\UU_a$ given an approximate scheme for evaluating $\FF_a$.
+
+\subsection{The \grdisco\ Grid}
+
+\grdisco\ solves the GRMHD equations in finite volume form \eqrefp{FVform} on a three dimensional shearing mesh.  Although the code is written to use general coordinates $x^\mu$, the reconstruction and source term integration are optimized for a cylindrical geometry $x^i = (r, \phi, z)$.  In describing the code, these coordinates will often be used.  The method of solution and grid structure are all shared with \disco\ \citep{Duffell16}, and are summarized below.  The GRMHD-specific routines are an extension to the basic \disco\ code base.
+
+The domain of the calculation is first split in the $r$ and $z$ directions, forming an $N_r\times N_z$ Cartesian grid of annuli.  The radial and vertical faces may in principle have arbitrary spacing, although in practice vertical faces are spaced at regular (linear) intervals and the radial faces are spaced regularly in $r$ or $\log r$.  Each annulus is divided into $N_\phi(r,z)$ cells.  $N_\phi$ may, and often does, change with $r$ and $z$ so adjacent annuli may not have the same number of cells.  The faces between neighbouring cells within an annulus can move, allowing cells to stretch, shrink, or simply transit along their annulus.  The velocity of the radial and vertical faces are all identically zero.  The total number of cells is $N$.
+
+The numerical solution to \eq{hyperbolicsystem} in finite volume form \eqrefp{FVform} at time $t$ is represented by a value for the mass $(\UUU_a)_q$ in each cell $q=1,\dots,N$.  We follow the approach of the \emph{method of lines}, first discretizing in space and constructing a coupled system of ordinary differential equations which can be numerically integrated by standard techniques.
+
+\grdisco\ is second order in space, the local truncation error scales as $(\Delta x)^2$.  At this order, cell averages of a quantity are equal to their value at the cell centers: $(\UU_a)_q = u_a(x_q)$ and $(\SS_a)_q = s_a(x_q)$ where $x_q$ is the center of cell $q$.  Since the mesh can shear azimuthally cells on adjacent annuli do not line up and cells will in general have more than six neighbours.  We will index the faces (the surface segment shared by a cell and its neighbour) of cell $q$ as $p_q$ and following \eq{FVform} use $\sgn(p_q)$ to denote whether surface is oriented inwards or outwards.  This allows us to write:
+\begin{equation}
+	\frac{d}{dt} \left(\UUU_a\right)_q = \sum_{p_q} \Big[\sgn(p_q)\big(\FF^{p_q}(u_L,u_R) - V^{p_q} \widehat u_a^{p_q}(u_L,u_R)\big)\Delta A_{p_q}\Big] + s_a(u_a) \Delta V\ , \eqlabel{numFVform}
+\end{equation}
+where $u_L$ and $u_R$ are interpolations of local fluid variables to the left and right sides of the face $p_q$ respectively.  Each $u_K$, $K=L,R$, is a function of a local stencil of $(u_a)_q$'s.  In this way the evolution of the $(\UUU_a)_q)$ are coupled, with the degree of coupling dependent on the order of the scheme.  \eq{numFVform} is a coupled system of first order ordinary differential equations in the $8\times N$ variables $(\UUU_a)_q$.
+
+Constructing appropriate $u_K$ at a given spatial order is called \emph{reconstruction} and considered in \sect{reconstruction}.  Calculating an appropriate value for $\FF(u_L, u_R)$ is done in \grdisco\ by an approximate Riemann solver, this procedure is detailed in \sect{riemann}.  The time evolution of \eq{numFVform} is covered in \sect{timeevolution}.
+
+\subsection{Time Evolution}
+\sectlabel{timeevolution}
+In \grdisco\ the numerical grid also evolves: the cell volumes $\Delta V_q$ and face areas $\Delta A_p$ are not constant.  The full set of data are then the $8N$ fluid variables $(U_a)_q$ and the azimuthal face positions $\phi_{q+1/2}(t)$, where $q+1/2$ denotes that this corresponds to the forward (increasing $\phi$) face of cell $q$.  The face velocity is set by the current fluid and grid variables by a function $V^\phi$:
+\begin{equation}
+	\frac{d}{dt} \phi_{q+1/2} = V^\phi((u_a)_{q'}, \phi_{q'+1/2}) \ . \eqlabel{faceMovement} 
+\end{equation}
+We use $Z = \{ (U_a)_q, \phi_{q+1/2} \}$ to denote the collection of all $9N$ dynamic variables.  Its time derivative is denoted $L$:
+\begin{equation}
+	\frac{d}{dt} Z = L(t, Z)\ . \eqlabel{Zevol}
+\end{equation}
+This equation may be integrated numerically by Runge-Kutta (RK) methods.  The entire array of $Z$ is evolved over a series of discrete time intervals $\Delta t^n$, where $t^{n+1} = t^n + \Delta t^n$. We denote $Z^n = Z(t^n)$.  \grdisco's first order time evolution algorithm is the forward Euler scheme:
+\begin{equation}
+	Z^{n+1} = Z^n + \Delta t^n L(t^n, Z^n) \ . \eqlabel{fe}
+\end{equation}
+The second order algorithm is the total variation diminishing (TVD) RK2 scheme \citep{Gottlieb98}:
+\begin{align}
+	Z^{(1)} &= Z^n + \Delta t^n L(t^n, Z^n) \\
+	Z^{n+1} &= \frac{1}{2}Z^n + \frac{1}{2}\left(Z^{(1)} + \Delta t^n L(t^{n+1}, Z^{(1)}) \right) \ . \eqlabel{rk2}
+\end{align}
+These explicit integration schemes are subject to the Courant--Friedrichs--Lewy (CFL) condition to ensure their stability \citep{CFL28}.  By this condition the timestep must be shorter than the smallest sound crossing time of a cell.  Denoting the minimum and maximum wavespeeds in the direction $i$ as $\lambda^{i\pm}$, this gives for a general coordinates:
+\begin{equation}
+	\Delta t < \Delta t_{\mathrm{max}} = \underset{i,q}{\min}\left( \frac{x^i_+ - x^i_-}{\left |\lambda^{i\pm} - V^{i\pm}\right |} \right)\ . \eqlabel{CFL}
+\end{equation}
+We adhere to the CFL condition by calculating $\Delta t_{\mathrm{max}}$ at the beginning of each time step and setting $\Delta t^n = \CFL\ \Delta t_{\mathrm{max}}$, where $\CFL \in [0,1]$.  In $d$ dimensions typically $\CFL < 1/d$ to ensure stability \cite{Toro}.  We refer to $\CFL$ as the CFL number.
+
+  We see here the first advantage of the moving mesh, the effective wave propagation speed is not $\lambda^i$ but $\lambda^i - V^i$.  For supersonic flows $\lambda^{i\pm}$ is large and dominated by the fluid velocity.  If $V^i$ is chosen to be near the fluid velocity then $\lambda^{i\pm} - V^i$ will be small, $\OO (c_s)$, and $\Delta t_{\mathrm{max}}$ will be larger than otherwise possible.  This allows a moving mesh code to simulate to the same final time with far fewer time steps than a fixed mesh code and can drastically improve efficiency.
+
+\subsection{Reconstruction}
+\sectlabel{reconstruction}
+
+To compute the intercell fluxes $\FF^p(u_L,u_R)$, the states $u_L$ and $u_R$ must first be determined.  Without loss of generality we can consider a single cell $q$ and one of its faces $\AA$.  If $\AA$ is located on the leading (increasing $x^i$) side of $q$ the interpolation will produce a $u_L$.  If $\AA$ is located on the trailing (decreasing $x^i$) side of $q$ the interpolation will produce a $u_R$.  We will refer in general to the interpolated value as $u_K$, understanding $K=L$ or $R$.
+
+\grdisco\ uses \disco's interpolation method, documented thoroughly in \citep{Duffell16}.  We will simply quote the results here.
+
+Interpolation is performed on the primitive quantities $(\PP_a)_q$.  If required the conserved variables $u_a$ may always be calculated from $\PP_a$.
+
+A first order scheme is constructed by treating the numerical solution as piecewise constant in every cell.  This is the Piecewise Constant Method (PCM), and produces the simple relationship:
+\begin{equation}
+	\PP_K = (\PP_a)_q\ .
+\end{equation}
+In this scheme the flux through a face depends only on the fluid variables immediately neighbouring the face.
+
+A second order scheme is constructed by treating the numerical solution as piecewise linear in every cell.  This is the Piecewise Linear Method (PLM), and requires the calculation of a gradient $\langle \partial_i \PP_a \rangle_q$ of the fluid variables in cell $q$.  Given this gradient, the coordinates of the cell center $x^i_q$, and those of the face center $x^i_f$ we calculate $u_K$ by linear interpolation:
+\begin{equation}
+	\PP_K = (u_a)_q + \langle \partial_i \PP_a \rangle_q (x^i_f - x^i_q)\ . \eqlabel{PLM}
+\end{equation}
+The gradient $\langle \partial_i \PP_a \rangle_q$ is a \emph{slope limited} gradient and not equal to the second order accurate cell-centered numerical gradient that one may expect.  The cell centered gradient in fact introduces instabilities near discontinuities that wreck the numerical solution \citep{vanLeer74}.  The solution is to sacrifice second order accuracy near discontinuities by reverting locally to a first order scheme.  When combined with a suitable time evolution scheme such a method is called \emph{total variation diminishing} (TVD).
+
+Reversion to first order is done through a \emph{slope limiter}, a non-linear function of the second order and first order gradients that returns a suitable slope limited numerical gradient.  In \disco we use the Generalized Minmod (GMM) limiter \citep{vanLeer79}, parameterized by a parameter $\theta \in [1,2]$ we refer to as the PLM parameter.  This limiter interpolates between the Minmod (MM) limiter at $\theta=1$ and the Monotonized Central (MC) limiter at $\theta=2$.  The MC limiter is less diffusive than the MM limiter but also more aggressive and prone to instability.  We usually take $\theta=1.5$.  
+
+For details on the specific implementation of the GMM limiter and how gradients are calculated on the shearing mesh see \cite{Duffell16}.
+
+\subsection{Riemann Solvers}
+\sectlabel{riemann}
+
+\discogr\ is a \emph{Godunov} code, it calculates intercell fluxes $\FF_a$ by (approximately) solving Riemann problems on each face with initial conditions given by interpolating fluid variables $u_L$ and $u_R$ (or $\PP_L$ and $\PP_R$) from the cell centers.  Godunov schemes have been shown to be highly robust and accurate, particularly in the presence of shock waves.  
+
+We approximate the solution near a particular face as plane parallel and only consider variation in the direction normal to the face.  This makes the problem essentially one dimensional with a piecewise constant initial condition, variables take values $u_L$ to the left of the interface and values $u_R$ to the right.  This is precisely the Riemann problem. In some cases it can be solved exactly, but in numerical codes often approximate Riemann solvers are used.  Approximate solvers are more efficient and can be very accurate.
+
+The desired output from the Riemann solver is the flux $\FF_a$ and fluid state $\widehat{u}_a$ across a face which has velocity $V$. Approximate Riemann solvers capture key elements of the exact Riemann solution. Firstly the solution is self-similar, it only depends on $x^i/t$ (assuming the $x^i$ coordinate is normal to the face).  Second, the solution takes the form of several waves of constant finite speed $\lambda_a$.  There can be at most as many waves as there are equations in the system being solved.  The Rankine--Hugoniot conditions must be satisfied over every discontinuous wave.  Lastly, all Riemann are upwinded: the solution for $x^i/t < \lambda^-$, where $\lambda^-$ is the smallest wave speed, is $\widehat{u}_a = u_L$ and $\FF_a = \FF_L = f(u_L)$.  If $x^i/t >\lambda^+$, where $\lambda^+$ is the largest wave speed, then $\widehat{u}_a = u_R$ and $\FF_a = \FF_R = f(u_R)$.
+
+Every fluid element has the ability to launch a series of waves of speed $\lambda_a$ called \emph{characteristics}.  This is most easily seen in the quasi-linear form of \eq{hyperbolicsystem} expressed in a local orthonormal frame:
+\begin{equation}
+	\partial_t u_a + \left(\frac{\partial f^i_a}{\partial u_b}\right)\partial_i u_b = s_a\ . \eqlabel{quasilinear}
+\end{equation}
+The matrix $\partial f^i_a / \partial u_b$ is the \emph{flux Jacobian}.  The characteristic wave speeds $\lambda_a$ are the eigenvalues of the flux Jacobian, one could diagonalize \eqlabel{quasilinear} which would result in a series of uncoupled advection equations with velocity $\lambda_a$ \citep{Leveque97}.  A system of equations is hyperbolic if all the $\lambda_a$ are real and finite.  The details of the possible wave speeds $\lambda_a$ and the physical states they connect is referred to as the characteristic structure of the system.
+
+\discogr\ can use three Riemann solvers: HLL, HLLC, and HLLD.  All take as input the left and right fluid states $u_L$ and $u_R$ and the fastest wave speeds $\lambda^\pm$ defined as:
+\begin{align}
+	\lambda^+ &= \max\left( \lam_a(u_L), \lambda_a(u_R)\right)\ , \\
+	\lambda^- &= \min\left( \lam_a(u_L), \lambda_a(u_R)\right)\ .
+\end{align}
+
+The Harten--Lax--van Leer (HLL) solver is the simplest approximate Riemann solver and requires no other knowledge of the characteristic structure of the system \citep{HLL}.  It defines a single average state $(u_{\rm HLL}, \FF_{\rm HLL})$ which lies between $\lam^-$ and $\lam^+$.  Both $u_{\rm HLL}$ and  $\FF_{\rm HLL}$ are determined uniquely by the Rankine--Hugoniot conditions:
+\begin{align}
+	u_{\rm HLL} &= \frac{\lam^+ u_R - \lam^- u_L - \FF_R + \FF_L}{\lam^+ - \lam^-}\ , \\
+	\FF_{\rm HLL} &= \frac{\lam^+ \FF_L - \lam^- \FF_R +\lam^+\lam^-\left(u_R-u_L\right)}{\lam^+ - \lam^-}\ . \\
+\end{align}
+Averaging over the entire intermediate state, the HLL Riemann solver is the most diffusive and also the most stable.  
+
+For GRHD problems, where $B^i = 0$, \grdisco\ can use the relativistic HLLC solver \citep{Toro94, Mignone05}.  This three wave solver introduces a contact wave with speed $\lam^*$ between $\lam^\pm$ over which the normal velocity must be continuous.  This solver is very accurate and preserves contact discontinuities exquisitely, particularly when combined with mesh motion.
+
+For GRMHD problems \grdisco can use the relativistic HLLD solver \citep{HLLD,Mignone09}.  In this solver the fastest wave speeds correspond to the fast Alfv\'{e}n waves.  There are four intermediate states, separated by the magnetosonic waves and a central contact discontinuity.  When combined with constrained transport and the moving mesh the HLLD solver provides fantastic magnetic field advection with very little diffusion.  In Newtonian simulations HLLD has been found to greatly aid in resolution of the magneto-rotational instability \citep{Sorathia12}.
+
+\subsection{Constrained Transport}
+\sectlabel{constrainedTransport}
+
+\subsection{Primitive Variable Recovery}
+\sectlabel{cons2prim}
 
 
-We first consider a rectangular control volume $\VV$ spanning $x^1\in [x^1_-, x^1_+]$,  $x^2\in [x^2_-, x^2_+]$, and  $x^3\in [x^3_-, x^3_+]$.
-
-\section{The \grdisco\  Code}
-
-\subsection{Breaking Up With The Coordinate Basis}
+\subsection{The $\tau_U$ Energy Variable: Breaking Up With The Coordinate Basis}
 
 By convenience, both indices of the stress energy tensor $T^{\mu\nu}$ are usually assumed to live in the same coordinate basis.  This is essential, for instance, to use the symmetry $T^{\mu\nu} = T^{\mu\nu}$.
 
@@ -231,6 +373,9 @@ A particularly useful $U^\mu$ for thin disks is a congruence of equatorial Keple
 \end{align}
 The same calculation can be carried out in the equatorial Kerr metric, bearing similar but far more complicated results.  Using this $U^\mu_{geo}$ frame to measure the fluid energy is essential for stably evolving high mach number accreting flows, as shown in \sect{test:kep}.  This frame was put to practical effect in studying minidisks, which will be discussed further in \chap{minidisk}.
 
+\subsection{Viscosity}
+\sectlabel{viscosity}
+
 \section{Code Tests}
 
 We ran \grdisco\ through a battery of test problems to analyze its performance and accuracy.  These are often hydrodynamic problems with an exact solution, or a solution that can be calculated numerically through other reliable means.  Some of these tests are to demonstrate the second order convergence of the code, others highlight the efficacy of particular features.
@@ -255,7 +400,7 @@ which can be used to obtain the velocity $v(x,t)$ given an ambient velocity $v_0
 	\rho(x,t) &= \rho(x - \lambda_\pm t, 0) \ , \eqlabel{isenExact} \\
 	\text{where } \lambda_\pm &= \frac{v \pm c_s}{1\pm v c_s}\ .
 \end{align} 
-We ran a linear isentropic wave over a two-dimensional cylindrical grid: $r\in[0.05,4]$, $\phi\in[0,2\pi)$.  In this way the isentropic wave is a two dimensional test: radial and azimuthal fluxes must balance as the wave travels obliquely over the grid.  Following \citet{Zhang06} we set $\rho_0 =1$, $P_0=100$, $v_0=0$, and $\Gam=5/3$.  The wave is initialized at $t=0$, centered at $x=1$ with $L=0.3$ and $\al=1$.  The simulation is run to $t=0.8$, just before the wave steepens into a shock.  Radial outflow boundaries were used at the inner and outer boundaries, the comparison with the exact solution is performed in the box $x\in[0.5,2]$, $y\in[-0.5,0.5]$ where boundary effects do not disturb the solution. Five simulations were performed with $N_r = 64, 128, 256, 512, 1024$ and $N_\phi$ chosen to maintain square cells.  The Riemann solver is HLLC, the CFL number is 0.5, and the slope limiter has $\theta=1.5$.
+We ran a linear isentropic wave over a two-dimensional cylindrical grid: $r\in[0.05,4]$, $\phi\in[0,2\pi)$.  In this way the isentropic wave is a two dimensional test: radial and azimuthal fluxes must balance as the wave travels obliquely over the grid.  Following \citet{Zhang06} we set $\rho_0 =1$, $P_0=100$, $v_0=0$, and $\Gam=5/3$.  The wave is initialized at $t=0$, centered at $x=1$ with $L=0.3$ and $\al=1$.  The simulation is run to $t=0.8$, just before the wave steepens into a shock.  Radial outflow boundaries were used at the inner and outer boundaries, the comparison with the exact solution is performed in the box $x\in[0.5,2]$, $y\in[-0.5,0.5]$ where boundary effects do not disturb the solution. Five simulations were performed with $N_r = 64, 128, 256, 512, 1024$ and $N_\phi$ chosen to maintain square cells.  The Riemann solver is HLLC, $\CFL$ is 0.5, and the slope limiter has $\theta=1.5$.
 
 \begin{figure}
 \begin{center}
@@ -315,9 +460,9 @@ This one dimensional problem was run with $\rho_0 = 1.0$ and $P_0 = 10^{-4}$ on 
 
 \subsection{Cartesian Shear Flow}
 \subsection{Novikov--Thorne Steady State}
-\subsection{Neutrino Dominated Accretion Flow Steady State}
+%\subsection{Neutrino Dominated Accretion Flow Steady State}
 \subsection{Magnetic Field Loop Advection}
-\subsection{Magnetic Blastwave}
+%\subsection{Magnetic Blastwave}
 \subsection{Linear MRI}
 
 %%%%%%
@@ -327,9 +472,9 @@ This one dimensional problem was run with $\rho_0 = 1.0$ and $P_0 = 10^{-4}$ on 
 \section{Summary}
 \sectlabel{summary}
 
-
-Summary
+We have introduced \grdisco, a new three dimensional GRMHD code that utiliizes a moving, shearing mesh.  The mesh motion greatly lowers the numerical dissipation while allowing for significantly longer time steps.  We have demonstrated \grdisco's performance on a number of test problems which show its accuracy and the utility of its advanced Riemann solvers.  \grdisco is massively parallel and available freely online at \url{https://github.com/geoffryan/Disco.git}.
 
 \section{Chapter Acknowledgements} \sectlabel{acknowledgements}
 
-Thanks
+We thank Brian Farris for many fruitful conversations and his work on Newtonian \disco.  
+

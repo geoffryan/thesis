@@ -167,8 +167,8 @@ The four velocity of an observer serves as their local time-like unit vector.  H
     \end{align}
     Writing these equations in terms of coordinate derivatives and splitting off the temporal part, we arrive at four equations: the constraint $\nabla \cdot B = 0$ and the evolution equations for $B^i$:
     \begin{align}
-    	\partial_j \left( \sqrt{\gam} B^j \right) &= 0 \ , \\
-	\partial_t \left( \sqrt{\gam} B^i \right) + \partial_j \left(\sqrt{\gam}\left(B^i v^j - B^j v^i\right)\right) &= 0\ .
+    	\partial_j \left( \sqrt{\gam} B^j \right) &= 0 \ , \eqlabel{divB}\\
+	\partial_t \left( \sqrt{\gam} B^i \right) + \partial_j \left(\sqrt{\gam}\left(B^i v^j - B^j v^i\right)\right) &= 0\ . \eqlabel{induction}
     \end{align}
     Lastly we can write down the combined stress-energy tensor for a magnetized perfect fluid in MHD.
     \begin{equation}
@@ -339,16 +339,6 @@ For GRHD problems, where $B^i = 0$, \grdisco\ can use the relativistic HLLC solv
 
 For GRMHD problems \grdisco can use the relativistic HLLD solver \citep{HLLD,Mignone09}.  In this solver the fastest wave speeds correspond to the fast Alfv\'{e}n waves.  There are four intermediate states, separated by the magnetosonic waves and a central contact discontinuity.  When combined with constrained transport and the moving mesh the HLLD solver provides fantastic magnetic field advection with very little diffusion.  In Newtonian simulations HLLD has been found to greatly aid in resolution of the magneto-rotational instability \citep{Sorathia12}.
 
-\subsection{Constrained Transport}
-\sectlabel{constrainedTransport}
-
-Our solution method, so far, has neglected one component of the induction equation \eqrefp{GRMHD3}:
-\begin{equation}
-	\nabla_\mu \dual{F}^{\mu\nu} = 0\ .
-\end{equation}
-The $\nu=1,2,3$ components of \eq{GRMHD3} are evolution equations for $B^1, B^2, B^3$ and are part of the hyperbolic system.  The fourth component, $\nu=0$, is a constraint equation which applies on all time slices: $\vec{\nabla}\cdot \vec{B} = 0$.
-
-
 \subsection{Primitive Variable Recovery: \ctop}
 \sectlabel{cons2prim}
 
@@ -391,6 +381,76 @@ A particularly useful $U^\mu$ for thin disks is a congruence of equatorial Keple
 						\sqrt{\frac{M/r^3}{1-3M/r}} & r > 6M \end{matrix} \right . . \eqlabel{Ugeo}
 \end{align}
 The same calculation can be carried out in the equatorial Kerr metric, bearing similar but far more complicated results.  Using this $U^\mu_{geo}$ frame to measure the fluid energy is essential for stably evolving high mach number accreting flows, as shown in \sect{test:kep}.  This frame was put to practical effect in studying minidisks, which will be discussed further in \chap{minidisk}.
+
+\subsection{Constrained Transport}
+\sectlabel{constrainedTransport}
+
+Our solution method, so far, has neglected one component of the induction equation \eqrefp{GRMHD3}:
+\begin{equation}
+	\nabla_\mu \dual{F}^{\mu\nu} = 0\ .
+\end{equation}
+The $\nu=1,2,3$ components of \eq{GRMHD3} are evolution equations for $B^1, B^2, B^3$ and are part of the hyperbolic system.  The fourth component, $\nu=0$, is a constraint equation which applies on all time slices: $\vec{\nabla}\cdot \vec{B} = 0$, and is not part of the hyperbolic system.
+
+Preserving this constraint numerically is vital to ensuring a stable and accurate evolution \citep{Brackbill80}.  Unfortunately any naive evolution scheme will unavoidably grow $\vec{\nabla}\cdot \vec{B}$ over time. Algorithms designed to evolve the $B^i$ while maintaining the constraint have been the subject of study for a number of years \citep{Evans88,Dai98,Ryu98,Balsara99,Toth00}.  In \grdisco\ we enforce $\vec{\nabla}\cdot \vec{B} = 0$ by implementing \emph{constrained transport} (CT) \citep{Evans88}.  \citet{Duffell16} has a thorough discussion explaining the advantages of CT over other schemes on the \disco\ mesh.
+
+Since electromagnetism is already a relativistic theory, the Newtonian MHD constrained transport implementation in \disco\ can be used for GRMHD with virtually no modification \citep{Duffull16}.  Here we summarize the important features in the language of GRMHD, which should serve as a guide to the \grdisco\ implementation.
+
+The basic idea of CT is that the natural way to formulate MHD is in terms of conserved magnetic fluxes: $\Phi = \int \vec{dA}\cdot \vec{B}$. The flux $\Phi$ obeys a natural conservation law, related to the conservation of magnetic field lines.  This is a lower dimensional conservation law: conserved variables live on faces and are transported through edges, as opposed to the conservation laws considered so far where conserved variables live in cells and are transported through faces.  Forcing the induction equation into a volume conservative form introduces a redundant description which necessitates the $\vec{\nabla}\cdot \vec{B} = 0$ constraint.  A conservation law written in terms of $\Phi$ has no redundancy and no extra equations.
+
+To be definite, we will first consider the flux $\Phi_1$ through a face $\AA_1$.  $\AA_1$ is a surface of constant $x^1$ bounded by $x^2_\pm$ and $x^3_\pm$, we allow $x^1$ to depend on time, $x^1 = x^1(t)$, and denote $V^1 = d x^1/dt$.  This surface will be representative of the constant $\phi$ faces in \grdisco.
+
+The flux is:
+\begin{equation}
+	\Phi_1 = \int \limits_{x^2_-}^{x^2_+} \int \limits_{x^3_-}^{x^3_+} dx^2 dx^3 \sqrt{\gam} B^1\ .
+\end{equation}
+The time derivative of this flux is:
+\begin{equation}
+	\frac{d}{dt}\Phi_1 = \int \limits_{x^2_-}^{x^2_+} \int \limits_{x^3_-}^{x^3_+} dx^2 dx^3 \left[\partial_t\left(\sqrt{\gam} B^1\right) + V^1\partial_1 \left(\sqrt{\gam} B^1\right)\right]\ .
+\end{equation}
+Using \eq{induction} on the first term, \eq{divB} on the second, and applying Stoke's law we arrive at:
+\begin{equation}
+	\frac{d}{dt}\Phi_1 = \left . \int_{x^2_-}^{x^2_+}  dx^2 \sqrt{\gam} \left( \FF^3(B^1) - V^1 B^3\right) \right |^{x^3_+}_{x^3_-} + \left . \int_{x^3_-}^{x^3_+}  dx^3 \sqrt{\gam} \left( \FF^2(B^1) - V^1 B^2\right) \right |^{x^2_+}_{x^2_-}\ . \eqlabel{dphi1dt}
+\end{equation}
+In the above we define
+\begin{equation}
+	\FF^j(B^i) = B^i v^j - B^j v^i = \al \dualt{F}^{ij}\ ,
+\end{equation}
+the ``flux'' of $B^i$ in direction $x^j$ according to \eq{induction}. As expected, the time derivative of $\Phi_1$ is expressed in terms of integrals over the boundary of $\AA_1$, a conservation law in two dimensions.  We can define the edge length
+\begin{equation}
+	\Delta \ell_i = \int_{x^i_-}^{x^i_+} dx^i \sqrt{\gam}\ ,
+\end{equation}
+and express \eq{dphi1dt} in the useful form:
+\begin{equation}
+	\frac{d}{dt}\Phi_1 =  \Big(\ave{\FF^3(B^1)} - V^1 \ave{B^3} \Big) \Delta \ell_2 \Bigg |^{x^3_+}_{x^3_-} + \Big( \ave{\FF^2(B^1)} - V^1 \ave{B^2}\Big)\Delta \ell_3 \Bigg |^{x^2_+}_{x^2_-}\ , \eqlabel{dphi1dt}
+\end{equation}
+where $\langle \cdot \rangle$ denotes an edge average.
+
+We can do a similar exercise in for a flux $\Phi_2$ on a surface of constant $x^2$ bounded by $x^1_\pm$ and $x^3_\pm$, where again we allow $x^1_\pm$ to be time dependent and write $V^i_\pm = d x^1_\pm / dt$.  This is representative of an $r$ or $z$ directed face on the \disco\ grid. An identical calculation reveals
+\begin{equation}
+	\Phi_2 = \int \limits_{x^1_-}^{x^1_+} \int \limits_{x^3_-}^{x^3_+} dx^1 dx^3 \sqrt{\gam} B^2\ ,
+\end{equation}
+and 
+\begin{equation}
+	\frac{d}{dt}\Phi_2 = \left . \int_{x^1_-}^{x^1_+}  dx^1 \sqrt{\gam} \left( \FF^3(B^2) - V^1 B^2\right) \right |^{x^3_+}_{x^3_-} + \left . \int_{x^3_-}^{x^3_+}  dx^3 \sqrt{\gam} \FF^1(B^2) \right |^{x^1_+}_{x^1_-}\ ,
+\end{equation}
+with finite area form
+\begin{equation}
+	\frac{d}{dt}\Phi_2 =  \Big(\ave{\FF^3(B^2)} - V^1 \ave{B^2} \Big) \Delta \ell_1 \Bigg |^{x^3_+}_{x^3_-} +  \ave{\FF^1(B^2)}\Delta \ell_3 \Bigg |^{x^1_+}_{x^1_-}\ . \eqlabel{dphi2dt}
+\end{equation}
+The equation for $\Phi_3$ can be obtained from \eq{dphi2dt} through the simple substitution $2\leftrightarrow3$.
+
+In \grdisco\ every grid face $p$ has an associated flux $\Phi_p$.  These form a set of conserved variables which are numerically integrated in time along with the volume conserved variables $(\UUU_a)_q$ and azimuthal faces $\phi_{q+1/2}$. At the end of each time step, along with the \ctop, the local primitive magnetic field values are recalculated from the fluxes $\Phi$.  For a cell $q$, let $A^i_\pm$ denote the total area of the bounding surface $x^i_\pm$.  In the radial and vertical dimensions this surface will contain multiple individual faces due to grid shear.  Let $p^i_\pm$ denote all such faces on the surface $x^i_\pm$.  Then the operation to transform fluxes to cell centered magnetic fields is:
+\begin{equation}
+	B^i = \frac{1}{A^i_+ + A^i_-} \sum_{p^i_\pm} \Phi_{p^i_\pm}\ .
+\end{equation}
+This is a second order accurate estimate for the cell centered fields.
+
+Evolving $\Phi_p$ requires assigning particular values of $\ave{\FF^j(B^i)}$ and $\ave{B^i}$ to every edge on the grid. An insight used by many CT MHD codes is that $\ave{\FF^j(B^i)}$ is exactly the transport flux of $B^i$ returned by the Riemann solver for a particular face.  Using these fluxes preserves the upwinded nature of the Riemann solver, preventing instabilites.
+
+An edge oriented along $x^k$ may be adjacent to up to four faces, two oriented normal to $x^i$ and two oriented normal to $x^j$, where $k\neq j \neq i$.  The value of $\ave{\FF^j(B^i)}$ associated with the edge should then be some average of the Riemann solver calculated $\FF^j(B^i)$ on the $x^j$ faces and $-\FF^i(B^j)$ on the $x^i$ faces, since$\FF^j(B^i) = \alpha \dualt{F}^{ij}$ is antisymmetric.
+
+The precise details of the \disco\ scheme for performing this average, which is also used in \grdisco, are given in \citet{Duffell16}.  That discussion refers to $\ave{\FF^j(B^i)}$ as the electric field $E^k$.  In general coordinates these are not necessarily equal, but this is simply a matter of terminology.
+
 
 \subsection{Viscosity}
 \sectlabel{viscosity}
@@ -524,8 +584,13 @@ As a final test of \grdisco's hydrodynamics solver we find the Novikov--Thorne (
 
 To balance the viscous heating we include a cooling source term corresponding to a disk blackbody with opacity due to electron scattering:
 \begin{equation}
-	\dot{Q} = -\frac{8}{3}\frac{ \sig_{\rm SB}T^4}{\ka_{\rm es} \Sig}\ .
+	\dot{Q} = \frac{8}{3}\frac{ \sig_{\rm SB}T^4}{\ka_{\rm es} \Sig}\ . \eqlabel{BBcooling}
 \end{equation}
+In \eq{BBcooling} $\sig_{\rm SB}$ is the Stefan-Boltzmann constant and $\ka_{\rm es} = 0.4$ cm\textsuperscript{2}/g is the electron scattering opacity.  This is incorporated by modifying the conservation of energy-momentum equation as:
+\begin{equation}
+	\nabla_\mu T^{\mu\nu} = - \dot{Q} u^\nu\ .
+\end{equation}
+
 The initial condition is the NT solution for $r>30M$ with a set accretion rate $\dot{M}$, we set $M = 10 M_\odot$ and $\dot{M} = 10^{-4} \dot{M}/y$.  Inside $30M$ the solution has uniform density and pressure.  The simulation is run for $t = 10^5 M$ with $\CFL=0.2$, PLM $\theta=1.5$, HLL Riemann solver, adiabatic index $\Gam = 5/3$, and energy frame velocity $U^\mu_{\rm geo}$. 
 
 \begin{figure}

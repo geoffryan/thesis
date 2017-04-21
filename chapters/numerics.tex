@@ -207,7 +207,7 @@ In GRMHD we often take $\PP_a = (\rho, P, v^1, v^2, v^3, B^1, B^2, B^3)$ where $
 There is some freedom in the choice of conserved variables.  In particular, any linear combination of the variables in $(\eqref{GRMHD1}-\eqref{GRMHD3})$ will also be conserved.  We take $u_a = (D, T^0_1, T^0_2, T^0_3, \tau_U, B^1, B^2, B^3)$ where $D = \rho u^0$, $\tau_U \equiv -U_\mu T^{0\mu}-D$, and $U^\mu$ is an exactly known timelike unit vector.  The energy variable $\tau_U$ is a generalization of the variable $\tau = -n_\mu T^{\mu0} - D$ used in many codes \citep{HARM, Duez05}.
 
 \subsection{Finite Volume Form}
-Our numerical scheme relies on the integral form of \eq{hyperbolic system}, which is easier to stabilize and implement in non-Cartesian geometries.  
+Our numerical scheme relies on the integral form of \eq{hyperbolicsystem}, which is easier to stabilize and implement in non-Cartesian geometries.  
 
 Consider a rectangular control volume $\VV$ spanning $x^1\in [x^1_-, x^1_+]$,  $x^2\in [x^2_-, x^2_+]$, and  $x^3\in [x^3_-, x^3_+]$.  Let $dV=\sqrt{-g}dx^1dx^2dx^3$.  We will assume the volume can stretch in the $x^1$ direction and let $x^1_\pm = x^1_\pm(t)$.  The mass of $u_a$ in $\VV$ is:
 \begin{equation}
@@ -320,7 +320,7 @@ Every fluid element has the ability to launch a series of waves of speed $\lambd
 \begin{equation}
 	\partial_t u_a + \left(\frac{\partial f^i_a}{\partial u_b}\right)\partial_i u_b = s_a\ . \eqlabel{quasilinear}
 \end{equation}
-The matrix $\partial f^i_a / \partial u_b$ is the \emph{flux Jacobian}.  The characteristic wave speeds $\lambda_a$ are the eigenvalues of the flux Jacobian, one could diagonalize \eqlabel{quasilinear} which would result in a series of uncoupled advection equations with velocity $\lambda_a$ \citep{Leveque97}.  A system of equations is hyperbolic if all the $\lambda_a$ are real and finite.  The details of the possible wave speeds $\lambda_a$ and the physical states they connect is referred to as the characteristic structure of the system.
+The matrix $\partial f^i_a / \partial u_b$ is the \emph{flux Jacobian}.  The characteristic wave speeds $\lambda_a$ are the eigenvalues of the flux Jacobian, one could diagonalize \eq{quasilinear} which would result in a series of uncoupled advection equations with velocity $\lambda_a$ \citep{Leveque97}.  A system of equations is hyperbolic if all the $\lambda_a$ are real and finite.  The details of the possible wave speeds $\lambda_a$ and the physical states they connect is referred to as the characteristic structure of the system.
 
 \discogr\ can use three Riemann solvers: HLL, HLLC, and HLLD.  All take as input the left and right fluid states $u_L$ and $u_R$ and the fastest wave speeds $\lambda^\pm$ defined as:
 \begin{align}
@@ -393,7 +393,7 @@ The $\nu=1,2,3$ components of \eq{GRMHD3} are evolution equations for $B^1, B^2,
 
 Preserving this constraint numerically is vital to ensuring a stable and accurate evolution \citep{Brackbill80}.  Unfortunately any naive evolution scheme will unavoidably grow $\vec{\nabla}\cdot \vec{B}$ over time. Algorithms designed to evolve the $B^i$ while maintaining the constraint have been the subject of study for a number of years \citep{Evans88,Dai98,Ryu98,Balsara99,Toth00}.  In \grdisco\ we enforce $\vec{\nabla}\cdot \vec{B} = 0$ by implementing \emph{constrained transport} (CT) \citep{Evans88}.  \citet{Duffell16} has a thorough discussion explaining the advantages of CT over other schemes on the \disco\ mesh.
 
-Since electromagnetism is already a relativistic theory, the Newtonian MHD constrained transport implementation in \disco\ can be used for GRMHD with virtually no modification \citep{Duffull16}.  Here we summarize the important features in the language of GRMHD, which should serve as a guide to the \grdisco\ implementation.
+Since electromagnetism is already a relativistic theory, the Newtonian MHD constrained transport implementation in \disco\ can be used for GRMHD with virtually no modification \citep{Duffell16}.  Here we summarize the important features in the language of GRMHD, which should serve as a guide to the \grdisco\ implementation.
 
 The basic idea of CT is that the natural way to formulate MHD is in terms of conserved magnetic fluxes: $\Phi = \int \vec{dA}\cdot \vec{B}$. The flux $\Phi$ obeys a natural conservation law, related to the conservation of magnetic field lines.  This is a lower dimensional conservation law: conserved variables live on faces and are transported through edges, as opposed to the conservation laws considered so far where conserved variables live in cells and are transported through faces.  Forcing the induction equation into a volume conservative form introduces a redundant description which necessitates the $\vec{\nabla}\cdot \vec{B} = 0$ constraint.  A conservation law written in terms of $\Phi$ has no redundancy and no extra equations.
 
@@ -421,7 +421,7 @@ the ``flux'' of $B^i$ in direction $x^j$ according to \eq{induction}. As expecte
 \end{equation}
 and express \eq{dphi1dt} in the useful form:
 \begin{equation}
-	\frac{d}{dt}\Phi_1 =  \Big(\ave{\FF^3(B^1)} - V^1 \ave{B^3} \Big) \Delta \ell_2 \Bigg |^{x^3_+}_{x^3_-} + \Big( \ave{\FF^2(B^1)} - V^1 \ave{B^2}\Big)\Delta \ell_3 \Bigg |^{x^2_+}_{x^2_-}\ , \eqlabel{dphi1dt}
+	\frac{d}{dt}\Phi_1 =  \Big(\ave{\FF^3(B^1)} - V^1 \ave{B^3} \Big) \Delta \ell_2 \Bigg |^{x^3_+}_{x^3_-} + \Big( \ave{\FF^2(B^1)} - V^1 \ave{B^2}\Big)\Delta \ell_3 \Bigg |^{x^2_+}_{x^2_-}\ , \eqlabel{dphi1dtFA}
 \end{equation}
 where $\langle \cdot \rangle$ denotes an edge average.
 
@@ -435,9 +435,9 @@ and
 \end{equation}
 with finite area form
 \begin{equation}
-	\frac{d}{dt}\Phi_2 =  \Big(\ave{\FF^3(B^2)} - V^1 \ave{B^2} \Big) \Delta \ell_1 \Bigg |^{x^3_+}_{x^3_-} +  \ave{\FF^1(B^2)}\Delta \ell_3 \Bigg |^{x^1_+}_{x^1_-}\ . \eqlabel{dphi2dt}
+	\frac{d}{dt}\Phi_2 =  \Big(\ave{\FF^3(B^2)} - V^1 \ave{B^2} \Big) \Delta \ell_1 \Bigg |^{x^3_+}_{x^3_-} +  \ave{\FF^1(B^2)}\Delta \ell_3 \Bigg |^{x^1_+}_{x^1_-}\ . \eqlabel{dphi2dtFA}
 \end{equation}
-The equation for $\Phi_3$ can be obtained from \eq{dphi2dt} through the simple substitution $2\leftrightarrow3$.
+The equation for $\Phi_3$ can be obtained from \eq{dphi2dtFA} through the simple substitution $2\leftrightarrow3$.
 
 In \grdisco\ every grid face $p$ has an associated flux $\Phi_p$.  These form a set of conserved variables which are numerically integrated in time along with the volume conserved variables $(\UUU_a)_q$ and azimuthal faces $\phi_{q+1/2}$. At the end of each time step, along with the \ctop, the local primitive magnetic field values are recalculated from the fluxes $\Phi$.  For a cell $q$, let $A^i_\pm$ denote the total area of the bounding surface $x^i_\pm$.  In the radial and vertical dimensions this surface will contain multiple individual faces due to grid shear.  Let $p^i_\pm$ denote all such faces on the surface $x^i_\pm$.  Then the operation to transform fluxes to cell centered magnetic fields is:
 \begin{equation}

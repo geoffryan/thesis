@@ -664,8 +664,10 @@ The grid has $N_r = 64$ and $N_\phi$ chosen to keep square cells. We test evolut
 \begin{figure}
 \begin{center}
 \begin{tabular}{cc}
-	\includegraphics[width=0.48\textwidth]{figures/numerics/nt_eps.pdf} & \includegraphics[width=0.48\textwidth]{figures/numerics/nt_eps.pdf} \\
-	\includegraphics[width=0.48\textwidth]{figures/numerics/nt_eps.pdf} & \includegraphics[width=0.48\textwidth]{figures/numerics/nt_eps.pdf} 
+	HLL \& Fixed Mesh & HLL \& Moving Mesh \\
+	\includegraphics[width=0.5\textwidth]{figures/numerics/floop_hlle_fix.png} & \includegraphics[width=0.5\textwidth]{figures/numerics/floop_hlle_mov.png} \\
+	HLLD \& Fixed Mesh & HLLD \& Moving Mesh \\
+	\includegraphics[width=0.5\textwidth]{figures/numerics/floop_hlld_fix.png} & \includegraphics[width=0.5\textwidth]{figures/numerics/floop_hlld_mov.png} 
 \end{tabular}
 \end{center}
 \caption{Magnetic field energy after one revolution in the field loop advection test.  The top row uses the HLL Riemann solver, the bottom uses HLLD.  The left column has a fixed grid while the right column uses a mesh moving at angular velocity $\Omega$.  All setups are evolved with constrained transport. The combination of HLLD with a moving mesh provides remarkable preservation of the magnetic field.  \figlabel{floop}}

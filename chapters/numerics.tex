@@ -17,6 +17,7 @@
 \newcommand{\Risco}{R_{\rm ISCO}}
 \newcommand{\sgn}{\mathrm{sgn}}
 \newcommand{\CFL}{\mathtt{CFL}}
+\newcommand{\ctop}{{\tt cons2prim}}
 
 % Math:
 
@@ -111,7 +112,11 @@ In this frame the metric tensor takes the form $g_{\hat{\mu}\hat{\nu}} = \text{d
 \begin{equation}
 	T^{\mu\nu}_{gas} = \rho h \ \! u^\mu u^\nu + P g^{\mu\nu} \eqlabel{defTgas}\ .
 \end{equation}
-The pressure and internal energy are functions of the local density and temperature, which must be determined from the properties of the particular fluid under consideration.  These relationships are referred to as the equation of state of the fluid.
+The pressure and internal energy are functions of the local density and temperature, which must be determined from the properties of the particular fluid under consideration.  These relationships are referred to as the equation of state of the fluid.  A common equation of state, one assumed throughout this thesis, is the gamma law:
+\begin{equation}
+	P = (\Gamma - 1)\rho \eps \ , \eqlabel{gammalaw}
+\end{equation}
+where $\Gam$, a constant, is the \emph{adiabatic index} of the gas under consideration.  Monatomic non-relativistic gases correspond to $\Gam=5/3$, diatomic non-relativistic gases to $\Gam=7/4$, and relativistic gases to $\Gam=4/3$.
 
 \subsection{Electromagnetic Content and MHD}
 
@@ -337,9 +342,23 @@ For GRMHD problems \grdisco can use the relativistic HLLD solver \citep{HLLD,Mig
 \subsection{Constrained Transport}
 \sectlabel{constrainedTransport}
 
-\subsection{Primitive Variable Recovery}
+Our solution method, so far, has neglected one component of the induction equation \eqrefp{GRMHD3}:
+\begin{equation}
+	\nabla_\mu \dual{F}^{\mu\nu} = 0\ .
+\end{equation}
+The $\nu=1,2,3$ components of \eq{GRMHD3} are evolution equations for $B^1, B^2, B^3$ and are part of the hyperbolic system.  The fourth component, $\nu=0$, is a constraint equation which applies on all time slices: $\vec{\nabla}\cdot \vec{B} = 0$.
+
+
+\subsection{Primitive Variable Recovery: \ctop}
 \sectlabel{cons2prim}
 
+In GRMHD and even GRHD there is no exact expression for $f_a$ and $s_a$ in terms of $u_a$.  Rather, primitive variables $\PP_a$ must be used as a go-between. Whenever the conserved variables $\UUU_a$ are updated the relationships $\UUU_a = u_a(\PP) \Delta V$ must be inverted to find the corresponding $\PP_a$.  These can then be used to evaluate $f_a$ and $s_a$ as necessary.
+
+The algorithm which recovers primitive variables often called \ctop.  \grdisco\ has two different \ctop\ routines implemented, a GRHD solver which assumes $B^i=0$ and a more generic GRMHD solver.  Both solvers use the values of $\PP_a$ from the last time step as initial values in an iterative scheme.  
+
+The GRHD solver is adapted from \citet{Duez05} and requires the solution of a quartic equation in $w-1$, where $w = -n_\mu u^\mu$ is the fluid Lorentz factor.  This is done via a Newton-Raphson scheme, which is found to be somewhat more efficient than an exact quartic solver.  Expressing the equation in terms of $w-1$ instead of $w$ (as used in \citet{Duez05}) reduces truncation error in slow flows where $w \approx 1$.
+
+In GRMHD \grdisco\ uses the primitive velocities $u_i$ instead of $v^i$.  This guarantees that all possible primitive states $\PP_a$ correspond physical states.  This is not the case with $v^i$, which are bounded from above to prevent super-luminal velocities.  Aside from this alteration, the GRMHD \ctop\  is a direct implementation of the Noble 2D scheme \citep{Noble06}.  This scheme uses Newton-Raphson to solve a coupled set of equations for $v^2 = \gamma^{ij}u_i u_j / w^2$ and $\eta = w h$.  Both this and the GRHD scheme currently require a gamma law equation of state \eqrefp{gammalaw}, although extensions to generic equations of state are well documented should the need to implement them arise.
 
 \subsection{The $\tau_U$ Energy Variable: Breaking Up With The Coordinate Basis}
 
@@ -375,6 +394,46 @@ The same calculation can be carried out in the equatorial Kerr metric, bearing s
 
 \subsection{Viscosity}
 \sectlabel{viscosity}
+
+Semi-analytic studies of accretion disks often rely on the $\alpha$-prescription, a method of introducing angular momentum transport by adding a viscous shear stress to the equations of motion with a strength parameterized by $\al \in [0,1]$.  One and two dimensional numerical disk calculations often include the same viscous terms as an approximation to the true angular momentum transport mechanism.  Although approximate, such calculations can be evolved for far longer and at far less cost than three dimensional MHD.  This allows the exploration of disk behaviours on timescales otherwise unattainable, and is complementary to MHD studies.
+
+We include a viscous evolution setup in \grdisco.  Dissipative processes, including viscosity, were first considered by \citet{Eckart40}.  This formulation, called Classical Irreversible Thermodynamics (CIT), is a first order theory: the entropy current $s^\mu $ is a function of the fluid variables alone and not their derivatives.  Such theories are non-causal, they include infinite signal velocities as dissipation transforms hyperbolic equations into parabolic ones.  CIT, also, is generically subject to large instabilities \citep{Hiscock85}.
+
+A resolution to the problems of CIT is to develop a second order theory, one which includes gradients of the thermodynamic variables in the entropy current.  This was first done by \citet{Israel76} and \citet{Stewart77}.  Using the Israel--Stewart theory, Extended Irreversible Thermodynamics (EIT), one can also write the hydrodynamic equations as a system of hyperbolic conservation laws by including the thermodynamic gradients as dynamic variables.  This has been implemented numerically for the purposes of simulating quark gluon plasma in heavy ion colliders \citep{DelZanna13}.
+
+Despite the formal instability of CIT, it has been successfully implemented and used in the study of relativistic stars \citep{Duez04}.  We implement a similar version of CIT in \grdisco.  We introduce a viscous stress tensor $\tau^{\mu\nu}$:
+\begin{equation}
+	\tau^{\al \be} = 2 \rho \nu \sigma^{\al \be} \ ,
+\end{equation}
+where $\sigma^{\al \be}$ is the \emph{shear} tensor:
+\begin{equation}
+	\sigma^{\al \be} = \frac{1}{2}\Big[\left(g^{\al \de} + u^\al u^\de\right)\nabla_\de u^\be +  \left(g^{\be \de} + u^\be u^\de\right)\nabla_\de u^\al\Big] - \frac{1}{d}\left(g^{\al \de} + u^\al u^\de\right)\nabla_\de u^\de\ .
+\end{equation}
+The shear tensor is symmetric, $\sig^{\al \be} = \sig^{\be \al}$, orthogonal to the four velocity, $u_\al \sig^{\al \be} = 0$, traceless, $\sig^\al_\al = 0$, and depends on the number of spatial dimensions $d$.
+
+The full stress energy tensor is $T^{\mu\nu}_{gas} - \tau^{\mu\nu}$, or:
+\begin{equation}
+	T^{\al \be} = \rho h u^\al u^\be + g^{\al\be} - 2 \rho \nu \sig^{\al \be}\ .
+\end{equation}
+It is assumed during viscous evolution that there are no magnetic fields.
+
+The purposes for including viscosity are to provide a parameterized mechanism for transporting angular momentum and to make contact with semi-analytic work.  In all applications we expect the viscosity to be a small contribution to the overall dynamics, particularly as the gas becomes relativistic and the equations of motion are dominated by the spacetime.  As such, we only require our CIT formulation to have the correct Newtonian limit and steady state.  As such we make a number of approximations when evaluating viscous contributions to the fluxes and source terms.
+
+Firstly, we neglect the contribution of $\tau^0_\al$ to the conserved variables $T^0_i$ and $\tau_U$.  This is not a drastic approximation: since $u^\al$ and $\sigma^{\al \be}$ are orthogonal it can be shown that $\tau^0_\al$ is $\OO(v/c)$ compared with the spatial terms $\tau^i_j$.  These contributions disappear in the Newtonian limit.  \citet{Duez04} also neglects these terms in the conserved variables, instead including them as a source term $\partial_t \tau^0_\al$ which is approximately evaluated using data from previous time steps.  We do not include this source term at all, in accordance with our second approximation.
+
+For our second approximation we neglect all terms $\partial_t u^\al$ in the evaluation of $\sig^{\al \be}$, calculating the shear tensor exclusively from spatial gradients.  For the purposes of calculating steady states (even relativistic ones) this is acceptable, as these terms would be zero anyways.  Under viscous evolution $\partial_t u^\al$ is far smaller than $\partial_i u^\al$, and under dynamic evolution the viscosity is irrelevant. 
+
+These two approximations are admittedly ad-hoc.  They essentially treat $\tau^{\al\be}$ as a quasi-Newtonian correction to the evolution. This is the \emph{wrong} thing to do if one is interested in the specifics of viscous evolution of a disk.  This is not wrong if one is interested simply in generating a stress which allows steady accretion.  We restrict our usage of the viscous terms to the second case.
+
+To evaluate $\tau^{\al\be}$ in the calculation of $\SS_a$, the spatial gradients $\partial_i u^\al$ must be known.  For this we use the cell-centered slope-limited gradients, calculated and stored during the reconstruction procedure.
+
+The contribution of $\tau^{\al\be}$ to the flux $\FF_a$ is not included in the Riemann solver fluxes.  Rather, it is added in a second step after the Riemann routines have completed.  For the velocity derivative normal to the face we use the face centered numerical derivative, for the tangential derivatives we use the average of the cell-centered gradients on either side of the face.  For the fluid variables themselves we use the arithmetic mean of the cell-centered quantities extrapolated to points positioned normal to the face center.
+
+\grdisco\ can run with a constant kinematic viscosity $\nu$ or use the $\al$-prescription $\nu = \al c_s H$ where $c_s$ is the local sound speed and $H$ is the local scale height, calculated as:
+\begin{equation}
+	H = \frac{1}{u^0}\sqrt{\frac{r^3}{M}\frac{P}{\rho h}}\ .
+\end{equation}
+With these routines and radiative cooling \grdisco\ can effectively reproduce global Novikov--Thorne disks in a dynamical setting, a difficult numerical task \citep{Novikov73}.
 
 \section{Code Tests}
 
@@ -460,6 +519,35 @@ This one dimensional problem was run with $\rho_0 = 1.0$ and $P_0 = 10^{-4}$ on 
 
 \subsection{Cartesian Shear Flow}
 \subsection{Novikov--Thorne Steady State}
+
+As a final test of \grdisco's hydrodynamics solver we find the Novikov--Thorne (NT) $\al$-disk solution in a dynamic calculation \citep{Novikov73}.  We work in the Kerr spacetime in Kerr-Schild coordinates on a radial domain $r \in [1.2M, 100M]$ with $N_r = 128$.  The Kerr parameter is $a_* =0.9$.   This domain crosses the ISCO and ergosphere and has several zones inside the event horizon.  Since the NT solution is vertically integrated and axisymmetric we work in 1D and set $N_\phi = N_z = 1$.  In this setup the density $\rho$ is actually the surface density $\Sigma = \rho H$, where $H$ is the disk scale height.  Similarly $P$ is the vertically integrated pressure.  We use $\al$-viscosity and set $\al = 0.1$.  
+
+To balance the viscous heating we include a cooling source term corresponding to a disk blackbody with opacity due to electron scattering:
+\begin{equation}
+	\dot{Q} = -\frac{8}{3}\frac{ \sig_{\rm SB}T^4}{\ka_{\rm es} \Sig}\ .
+\end{equation}
+The initial condition is the NT solution for $r>30M$ with a set accretion rate $\dot{M}$, we set $M = 10 M_\odot$ and $\dot{M} = 10^{-4} \dot{M}/y$.  Inside $30M$ the solution has uniform density and pressure.  The simulation is run for $t = 10^5 M$ with $\CFL=0.2$, PLM $\theta=1.5$, HLL Riemann solver, adiabatic index $\Gam = 5/3$, and energy frame velocity $U^\mu_{\rm geo}$. 
+
+\begin{figure}
+\begin{center}
+	\includegraphics[width=0.65\textwidth]{figures/numerics/nt_sig.pdf}
+\end{center}
+\caption{Surface density in steady state with $\al$ viscosity and cooling in the Kerr metric.  Disco data in black crosses, Novikov--Thorne solution in blue, isentropic plunging in orange.  The grey dashed line denotes the ISCO, the light grey shading the ergosphere, and the dark grey the black hole interior.  \figlabel{nt:sig}}
+\end{figure}
+
+The inner disk quickly accretes as in the Keplerian inflow test, but over time is refilled due to viscous stresses.  Viscous heating is balanced by radiative cooling and a steady state is reached, shown in \fig{nt:sig}.  The density profile matches the Novikov--Thorne solution outside the ISCO and smoothly continues into the horizon.  Inside the ISCO the solution is well approximated by a ``plunging'' solution characterized by $u^\mu = U^\mu_{\rm geo}$, $\dot{M}$ constant, and $P / \Sig^\Gam$ constant.  
+
+The NT solution by construction assumes the torque $\tau^r_\phi(r=\Risco) = 0$.  This allows for simply-parameterized algebraic solutions but causes the profile to diverge at $\Risco$.  Our dynamic calculation naturally finds a small torque at the ISCO, extending the NT solution smoothly into the horizon.
+
+\begin{figure}
+\begin{center}
+	\includegraphics[width=0.65\textwidth]{figures/numerics/nt_eps.pdf}
+\end{center}
+\caption{Energy variables for the dynamic Novikov--Thorne solution. Standard variable $\tau$ in blue, our co-moving variable $\tau_U$ in orange, and the internal energy density in black crosses.  Other markings identical to \fig{nt:sig}.  \figlabel{nt:eps}}
+\end{figure}
+
+For illustration \fig{nt:eps} shows the energy variables $\tau$ and $\tau_U$ compared to the lab frame internal energy density $\rho \eps u^0$.  We see near agreement between the internal energy and $\tau_U$ and a vast difference with $\tau$, which is several orders of magnitude larger.  Truncation errors of the order $10^{-6}$ in the energy can easily swamp out the internal energy entirely in the inner disk.  Note that for realistic x-ray binaries the accretion rate used here is quite large.  Realistic binaries have smaller accretion rates, higher mach numbers, and would produce an even larger discrepancy between $\tau$ and the internal energy.  
+
 %\subsection{Neutrino Dominated Accretion Flow Steady State}
 \subsection{Magnetic Field Loop Advection}
 %\subsection{Magnetic Blastwave}

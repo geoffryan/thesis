@@ -16,7 +16,7 @@
 \newcommand{\dualt}[1]{*\! #1}
 \newcommand{\Risco}{R_{\rm ISCO}}
 \newcommand{\sgn}{\mathrm{sgn}}
-\newcommand{\CFL}{\mathtt{CFL}}
+\newcommand{\CFL}{{\tt CFL}}
 \newcommand{\ctop}{{\tt cons2prim}}
 
 % Math:
@@ -276,9 +276,9 @@ The second order algorithm is the total variation diminishing (TVD) RK2 scheme \
 \end{align}
 These explicit integration schemes are subject to the Courant--Friedrichs--Lewy (CFL) condition to ensure their stability \citep{CFL28}.  By this condition the timestep must be shorter than the smallest sound crossing time of a cell.  Denoting the minimum and maximum wavespeeds in the direction $i$ as $\lambda^{i\pm}$, this gives for a general coordinates:
 \begin{equation}
-	\Delta t < \Delta t_{\mathrm{max}} = \underset{i,q}{\min}\left( \frac{x^i_+ - x^i_-}{\left |\lambda^{i\pm} - V^{i\pm}\right |} \right)\ . \eqlabel{CFL}
+	\Delta t < \Delta t_{\mathrm{in}} = \underset{i,q}{\min}\left( \frac{x^i_+ - x^i_-}{\left |\lambda^{i\pm} - V^{i\pm}\right |} \right)\ . \eqlabel{CFL}
 \end{equation}
-We adhere to the CFL condition by calculating $\Delta t_{\mathrm{max}}$ at the beginning of each time step and setting $\Delta t^n = \CFL\ \Delta t_{\mathrm{max}}$, where $\CFL \in [0,1]$.  In $d$ dimensions typically $\CFL < 1/d$ to ensure stability \cite{Toro}.  We refer to $\CFL$ as the CFL number.
+We adhere to the CFL condition by calculating $\Delta t_{\mathrm{min}}$ at the beginning of each time step and setting $\Delta t^n = \CFL\ \Delta t_{\mathrm{min}}$, where $\CFL \in [0,1]$.  In $d$ dimensions typically $\CFL < 1/d$ to ensure stability \cite{Toro}.  We refer to $\CFL$ as the CFL number.
 
   We see here the first advantage of the moving mesh, the effective wave propagation speed is not $\lambda^i$ but $\lambda^i - V^i$.  For supersonic flows $\lambda^{i\pm}$ is large and dominated by the fluid velocity.  If $V^i$ is chosen to be near the fluid velocity then $\lambda^{i\pm} - V^i$ will be small, $\OO (c_s)$, and $\Delta t_{\mathrm{max}}$ will be larger than otherwise possible.  This allows a moving mesh code to simulate to the same final time with far fewer time steps than a fixed mesh code and can drastically improve efficiency.
 
@@ -489,6 +489,8 @@ To evaluate $\tau^{\al\be}$ in the calculation of $\SS_a$, the spatial gradients
 
 The contribution of $\tau^{\al\be}$ to the flux $\FF_a$ is not included in the Riemann solver fluxes.  Rather, it is added in a second step after the Riemann routines have completed.  For the velocity derivative normal to the face we use the face centered numerical derivative, for the tangential derivatives we use the average of the cell-centered gradients on either side of the face.  For the fluid variables themselves we use the arithmetic mean of the cell-centered quantities extrapolated to points positioned normal to the face center.
 
+To ensure stable evolution the \CFL time step calculation must be informed of viscous timescales.  When calculating $\Delta t_{\rm min}$ we include a viscous time $\Delta t_{\rm visc} = \Delta r^2 / \nu$ for each cell in addition to the sound crossing times given in \eq{CFL}.
+
 \grdisco\ can run with a constant kinematic viscosity $\nu$ or use the $\al$-prescription $\nu = \al c_s H$ where $c_s$ is the local sound speed and $H$ is the local scale height, calculated as:
 \begin{equation}
 	H = \frac{1}{u^0}\sqrt{\frac{r^3}{M}\frac{P}{\rho h}}\ .
@@ -578,6 +580,27 @@ This one dimensional problem was run with $\rho_0 = 1.0$ and $P_0 = 10^{-4}$ on 
 \fig{kep:rho} and \fig{kep:mach} show density $\rho$ and Mach number $\mathcal{M} = |u|/c_s$ in the Keplerian flow test for two energy variables: the standard $\tau$ and our co-moving variable $\tau_U$ using the geodesic frame $U_{geo}$.  The Mach number of this flow is comparable to an x-ray binary or other thin sub-Eddington accretion disks.  The $\tau$ variable completely fails within the ISCO: improperly reconstructed pressures result in wild instabilities which disrupt the density.  The $\tau_U$ variable enables smooth evolution, even up to Mach numbers $\sim 10^3$ where the thermal energy is $\sim 10^{-6} = \mathcal{M}^{-2}$ of the kinetic.  The sharp cusp of the analytic solution $\Risco$ is difficult to resolve as it creates a large pressure gradient which can transport gas inwards.  Realistic disks will always have some form of angular momentum transport, so this is not an issue.
 
 \subsection{Cartesian Shear Flow}
+
+To test the Newtonian viscous evolution we set up a simple Cartesian shear flow with a Gaussian profile.  The Newtonian solution to the isothermal Navier-Stokes equations in this situation is:
+\begin{align}
+	\rho(x,t) &= \rho_0\ , \\
+	P(x,t) &= P_0 \ ,\\
+	v^x(x,t) &= 0 \ ,\\
+	v^y(x,t) &= \frac{v_0}{\sqrt{4\pi\nu t}}\exp\left(-\frac{(x-x_0)^2}{4\nu t}\right)\ ,
+\end{align}
+where $\nu$ is the kinematic viscosity, $\rho_0$, $P_0$, and $v_0$ are constants, and $x_0$ is the position of the velocity peak.
+
+To emulate this in \grdisco\ we set up a plane parallel flow on a two dimensional $r\in[1,6]$, $\phi\in[0,2\pi]$ domain with zero gradient boundary conditions on the radial boundaries.  We set $\rho_0 = 1$, $P_0=10^{-6}$, and $v_0=10^{-6}$.  The low velocity and pressure ensure Newtonian evolution.  The kinematic viscosity is $\nu=10^{-2}$, also chosen to be small so viscous heating (and the ensuing pressure gradients) will also be small.  The velocity peak is placed at $x_0 = 3$ and the evolution is from $t_0 = 0.5$ to $t_1 = 1$.  Similar to the isentropic wave, evolving this plane parallel flow across the cylindrical \disco\ grid makes this a non-trivial test as shear in both $r$ and $\phi$ will be present.  Success indicates the terms have been implemented correctly in the grid geometry.  We evolve using the HLL Riemann solver, PLM $\theta = 1.5$, and $\CFL=0.5$.  The comparison is carried out in the rectangular domain $x\in[2,4]$, $y\in[-2,2]$ which remains undisturbed by boundary fluctuations.
+
+\begin{figure}
+\begin{center}
+	\includegraphics[width=0.6\textwidth]{figures/numerics/cs_vy.png}
+\end{center}
+\caption{Velocity $v^y$ in the Cartesian shear test. \grdisco\ data with $N_r=256$ at $t=1$ in blue dots, initial condition in dark grey, and final state in light grey.  \figlabel{cs:vy}}
+\end{figure}
+
+\fig{cs:vy} shows the velocity $v^y$ at the end of the calculation, compared to the initial and final states.  The agreement is very good: the error $L_1[v^y]$ is of the order $10^{-6}$, the order at which relativistic corrections affect the solution.  As with the isentropic wave, the lack of dispersion in the data indicates that planar symmetry is maintained over the curved \disco\ grid.
+
 \subsection{Novikov--Thorne Steady State}
 
 As a final test of \grdisco's hydrodynamics solver we find the Novikov--Thorne (NT) $\al$-disk solution in a dynamic calculation \citep{Novikov73}.  We work in the Kerr spacetime in Kerr-Schild coordinates on a radial domain $r \in [1.2M, 100M]$ with $N_r = 128$.  The Kerr parameter is $a_* =0.9$.   This domain crosses the ISCO and ergosphere and has several zones inside the event horizon.  Since the NT solution is vertically integrated and axisymmetric we work in 1D and set $N_\phi = N_z = 1$.  In this setup the density $\rho$ is actually the surface density $\Sigma = \rho H$, where $H$ is the disk scale height.  Similarly $P$ is the vertically integrated pressure.  We use $\al$-viscosity and set $\al = 0.1$.  
@@ -615,6 +638,9 @@ For illustration \fig{nt:eps} shows the energy variables $\tau$ and $\tau_U$ com
 
 %\subsection{Neutrino Dominated Accretion Flow Steady State}
 \subsection{Magnetic Field Loop Advection}
+
+The first test of \grdisco's performance in GRMHD is the advection of a magnetic field loop.
+
 %\subsection{Magnetic Blastwave}
 \subsection{Linear MRI}
 

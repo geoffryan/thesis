@@ -639,7 +639,39 @@ For illustration \fig{nt:eps} shows the energy variables $\tau$ and $\tau_U$ com
 %\subsection{Neutrino Dominated Accretion Flow Steady State}
 \subsection{Magnetic Field Loop Advection}
 
-The first test of \grdisco's performance in GRMHD is the advection of a magnetic field loop.
+The first test of \grdisco's performance in GRMHD is the advection of a magnetic field loop.  In this test the magnetic field is set to be very weak so its motion should be purely due to advection.  This tests the constrained transport scheme and the Riemann solvers, but does not include any strong field effects.
+
+The background solution is a rigidly rotating fluid disk in flat spacetime with angular velocity $\Omega$ on the domain $r\in[0.1,0.9]$, $\phi\in[0,2\pi]$.  The fluid is in a steady state given by:
+\begin{align}
+	\rho &= \rho_0 \ ,\\
+	P &= \frac{\Gam-1}{\Gam}\left(\rho_0 h_0\left(1-r^2\Omega^2\right)^{-\Gam / 2(\Gam-1)} - \rho_0\right)\ ,\\
+	v^r &= 0 \ ,\\
+	v^\phi &= \Omega\ .
+\end{align}
+Define the coordinates $r' = \sqrt{(x-r_0)^2 + y^2}$ and $\psi = \tan^{-1} y/(x-r_0)$.  We impose a magnetic field in the region $r' < R_0$:
+\begin{align}
+	B^{\widehat{\psi}} &= B_0 \sqrt{\frac{2 r'}{R_0}} \sin^2\left(\frac{\pi r'}{R_0}\right)\ .
+\end{align}
+In grid coordinates:
+\begin{align}
+	B^r &= B^{\widehat{\psi}}\left( -\sin \psi \cos \phi + \cos \psi \sin \phi\right)\ , \\
+	B^\phi &= \frac{1}{r} B^{\widehat{\psi}}\left( \sin \psi \sin \phi + \cos \psi \cos \phi\right) \ .
+\end{align}
+We take $\rho_0 = 1$, $P_0 = \rho_0 (h_0 - 1)(\Gam-1)/\Gam = 10^{-2}$, and $\Om=1$, so the gas has sound speed $c_s \sim 10^{-1}$ and relativistic advection velocity.  The field loop is centered at $r_0 = 0.5$ and has radius $R_0 = 0.3$.  The field strength $B_0 = 10^{-4}$, so $c_A \sim 10^{-4} \ll c_s$ and the magnetic field should be simply advected without distortion.  We run the simulation until $t = 2\pi$, at which point the field loop should have completed one full orbit.
+
+The grid has $N_r = 64$ and $N_\phi$ chosen to keep square cells. We test evolution with both HLL and HLLD Riemann solvers with mesh motion on and off.  When mesh motion is on the cells advect with angular velocity $\Omega$.  For all runs $\Gam=5/3$, PLM $\theta =1.5$, \CFL is 0.5, radial boundaries are held fixed, and constrained transport is used.
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{cc}
+	\includegraphics[width=0.48\textwidth]{figures/numerics/nt_eps.pdf} & \includegraphics[width=0.48\textwidth]{figures/numerics/nt_eps.pdf} \\
+	\includegraphics[width=0.48\textwidth]{figures/numerics/nt_eps.pdf} & \includegraphics[width=0.48\textwidth]{figures/numerics/nt_eps.pdf} 
+\end{tabular}
+\end{center}
+\caption{Magnetic field energy after one revolution in the field loop advection test.  The top row uses the HLL Riemann solver, the bottom uses HLLD.  The left column has a fixed grid while the right column uses a mesh moving at angular velocity $\Omega$.  All setups are evolved with constrained transport. The combination of HLLD with a moving mesh provides remarkable preservation of the magnetic field.  \figlabel{floop}}
+\end{figure}
+
+\fig{floop} shows the magnetic energy density $B^2$ after one orbit for all 4 runs.  With no mesh motion and HLL Riemann solver the loop develops large asymmetric fluctuations after only a single orbit.  Mesh motion symmetrizes the fluctuations but a significant discrepancy remains.  The HLLD solver does a much better job of preserving the magnetic field without dissipation, when combined with mesh motion the field loop is virtually distortion free.
 
 %\subsection{Magnetic Blastwave}
 \subsection{Linear MRI}

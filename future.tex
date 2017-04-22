@@ -1,0 +1,45 @@
+\chapter*{Future Directions}\addcontentsline{toc}{chapter}{Future Directions}
+% Chapter specific commands:
+
+% Math:
+
+%\chapter{Future Directions \chaplabel{future}}
+
+Here we briefly summarize future directions for the work presented in this thesis.
+
+\section*{Numerical Methods}
+
+The \disco\ shearing mesh is of great advantage when fluid motion is dominantly in the azimuthal direction.  This is completely satisfied by a Keplerian disk above the ISCO.  However, for relativistic problems the region below the ISCO where fluid plunges and the poles where there may be an outflow or jet are often of interest.  For these more complicated problems, the advantage of the moving mesh as it stands is tempered.
+
+A straightforward resolution to this problem is to allow the mesh to move in more than one dimension.  To keep the technical advantages of \disco, the mesh motion cannot be arbitrary.  We desire cell faces to always be coordinate surfaces, determining neighbours to be simple (take linear time), and to not be required to add cells on-the-fly.  The most general scheme which fits these constraints is one where the discretization is such that (taking the \disco\ $r\phi z$ grid as an example):
+\begin{enumerate}
+	\item Space is foliated by $N_z$ surfaces of constant $z$.  Cells will live in sheets in between these surfaces.
+	\item Each sheet is foliated by $N_r(z)$ surfaces of constant $r$, dividing the sheet up into concentric annuli.
+	\item Each annulus is divided by $N_\phi(r,z)$ surfaces of constant $\phi$, defining the boundaries of individual cells.
+\end{enumerate}
+Mesh motion here can be accomplished by allowing each $\phi$, $r$, and $z$ surface to move independently.  When a surface of constant $r$ moves the \emph{entire} annulus moves, as all cells in the annulus share the same $r$ surface.  When a surface of constant $z$ moves the entire sheet moves as a unit, as all cells in the sheet share the same $z$ surface.
+
+This scheme does not require cylindrical coordinates, in fact it can be written in arbitrary coordinates $(x^1, x^2, x^3)$.  If such a scheme were used in an accretion disk simulation, entire annuli could free fall through the ISCO or get lifted in jets.  If the disk heats and expands vertically the mesh could breathe with it.  At the very least this scheme may offer significant time step advantages for 3D disk simulations, where the timestep is dominated by the near light-like velocities of gas at the event horizon.
+
+The energy variable $\tau_U$ has been of great benefit in \grdisco.  Under a similar operation, one could use different spatial basis vectors to calculate the conserved momentum and/or magnetic fields.  Such a scheme could, perhaps, be used to circumvent the notorious problems of the coordinate singularity at $r=0$ by expressing $T^0_i$ and $B^i$ in a basis which is Cartesian (and hence well-defined) near the pole but cylindrical (and angular momentum conserving) away from it.
+
+\section*{Black Hole Accretion Disks}
+
+The Kerr parameter of black holes in x-ray binaries is typically measured through continuum fitting to a Novikov--Thorne model or by the iron $K\al$ line.  X-ray binaries are also subject to tidal forces and may exhibit similar spiral shock structure to minidisks.  The excess shock luminosity from near ISCO, if fit with a NT model, would report a smaller inner disk radius and hence a larger value of $a_*$.  To examine this, we can \grdisco\ with the same basic setup as with minidisks.  The nozzle should be moved to $L_1$, and different values of $\dot{M}$ and $a_*$ should be used.  It is likely that realistic disks are too supersonic to be reliably simulated in this manner, so the goal should be to consider numerically achievable disks and establish scaling relations which can be extrapolated to observed systems.
+
+The exact mechanism by which the spiral shocks are excited, in minidisks or x-ray binaries, is still an open question.  A series of minidisk (or x-ray binary) calculations, varying the binary separation $a$, mass ration $q$, and angular momentum of the nozzle is warranted.  Presumably the shock amplitude depends on how much of the disk is subject to Lindblad resonances. This depends on the truncation radius, which depends on the angular momentum of the nozzle and the binary orbital parameters.  Elucidating this connection could aid the construction of semi-analytic models of shock-driven accretion.  A related question, addressed in the same work, is the dynamics of the outer disk edge and the fate of the gas flung off with high angular momentum.
+
+Kilonova are the most likely electromagnetic counterpart to a LIGO source to be observed in the near future. Many key observational characteristics of their emission are still uncertain, particularly how bright the emission from disk winds are.  Heavy $r$-process nuclei can significantly dim emission, but disk winds may have a sufficiently high $Y_e$ that these isotopes are not produced.  A good calculation in 3D GRMHD with a physical equation of state and neutrino cooling could greatly elucidate the question.  The key output would be the electron fraction $Y_e$, entropy, and velocity of wind material as a function of time. This may be used as input into a nuclear reaction network calculation to build detailed light curves of kilonova emission.
+
+\section*{Binary Black Hole Accretion}
+
+Many pieces of the binary black hole (BBH) accretion problem have been well calculated recently.  It should be possible now to establish a global semi-analytic model of accreting BBH systems, at least when the binary orbit and circumbinary disk are aligned.  This work would incorporate the latest detailed numerical simulations, which measure relevant torques and dissipation in the circumbinary disk and minidisks.  If the BBH orbit decays as a result of circumbinary disk interaction, there must be a luminosity increase to shed the BBH orbital energy.  This increase can be parameterized in terms of the BBH lifetime and could be a simple indicator of BBH presence in an AGN.
+
+\citet{Farris15B} did a Newtonian simulation of BBH mergers in a circumbinary disk and found ``decoupling'' was a gradual process and the binary had gas nearby throughout the merger.  This calculation necessarily under resolved gas near the black holes, and is ripe for a revisit with \grdisco.  Using an approximate binary black hole metric (e.g \citet{Mundim14}) a high resolution simulation of BBH accretion until just before merger can be performed.  This would capture the destruction of the minidisks and the ensuing electromagnetic emission from shocks. If sufficiently bright, this could be an electromagnetic precursor to BBH merger.
+
+After a BBH merger the gravitational waves carry away momentum and  $~5\%$ of the rest mass energy of the black holes, leaving a recoiling black hole somewhat lighter than the previous system.  The response of gas to the mass loss and kick of the central BH is a potential source of electromagnetic emission, and could be either a LIGO or LISA counterpart.  As it appears gas may be quite close to the black holes at merger, a detailed relativistic calculation of this system is warranted.  Initial conditions at first would be thin disks, and later could be informed by the pre-merger simulations mentioned above.  Gas nearby the BBHs can emit promptly and at high frequencies, these calculations would determine precisely when we may expect such emission.
+
+The evolution of an axisymmetric ring of gas around a point mass is known exactly for the case of constant kinematic viscosity.  A similar calculation onto a binary point mass, in two dimensions, would be a very clean and clear demonstration of the dynamics of BBH accretion.  The cavity radius should be established dynamically, as well as the minidisks.  The outer edge of the circumbinary disk, and how its affected by the angular momentum transferred from the binary, could be studied.  This is a clean system to study basic global properties of BBH accretion and inform the assumptions made in more detailed, local work.
+
+If an AGN hosts a BBH, it is likely gas is delivered isotropically.  Torques from the binary will (probably) serve to align the gas with orbital plane, but the efficiency and timescale of how this process acts on gas is unknown.  It may be fast and efficient, or it may not.  Three dimensional simulations should be performed and the timescale for circularization, timescale for alignment, and precession frequencies measured.  Some of these may be compared to analytic work in the restricted three body problem.  This is a difficult problem for a grid-based hydrodynamics code.  A potential upgrade to \disco\ and \grdisco\ allowing the central axis to precess may be of great assistance.
+

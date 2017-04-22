@@ -21,9 +21,9 @@
 
 % Math:
 
-\chapter{Numerical Relativistic Hydrodynamics\chaplabel{numerics}}
+\chapter{Numerical General Relativistic Magnetohydrodynamics with \discogr \chaplabel{numerics}}
 
-This Chapter presents ongoing work with Paul Duffell and Andrew MacFadyen which will be incorporated into a future publication upon the public release of \grdisco, a GRMHD extension to the \disco code written by Paul Duffell.
+This Chapter presents ongoing work with Paul Duffell and Andrew MacFadyen which will be incorporated into a future publication upon the public release of \grdisco, a GRMHD extension to the \disco\ code written by Paul Duffell.
 
 %%%%%
 % Abstract
@@ -176,7 +176,7 @@ The four velocity of an observer serves as their local time-like unit vector.  H
     \end{equation}
     This gives us all the tools we need to begin investigating these flows numerically.
 
-\section{Numerical Solutions to Hyperbolic Equations: The \grdisco\ code}
+\section{The \grdisco\ code: Numerical Solutions to Hyperbolic Equations}
 
 We have established that an ideal astrophysical plasma will obey the equations of general relativistic magnetohydrodynamics (GRMHD):
 \begin{align}
@@ -659,7 +659,7 @@ In grid coordinates:
 \end{align}
 We take $\rho_0 = 1$, $P_0 = \rho_0 (h_0 - 1)(\Gam-1)/\Gam = 10^{-2}$, and $\Om=1$, so the gas has sound speed $c_s \sim 10^{-1}$ and relativistic advection velocity.  The field loop is centered at $r_0 = 0.5$ and has radius $R_0 = 0.3$.  The field strength $B_0 = 10^{-4}$, so $c_A \sim 10^{-4} \ll c_s$ and the magnetic field should be simply advected without distortion.  We run the simulation until $t = 2\pi$, at which point the field loop should have completed one full orbit.
 
-The grid has $N_r = 64$ and $N_\phi$ chosen to keep square cells. We test evolution with both HLL and HLLD Riemann solvers with mesh motion on and off.  When mesh motion is on the cells advect with angular velocity $\Omega$.  For all runs $\Gam=5/3$, PLM $\theta =1.5$, \CFL is 0.5, radial boundaries are held fixed, and constrained transport is used.
+The grid has $N_r = 64$ and $N_\phi$ chosen to keep square cells. We test evolution with both HLL and HLLD Riemann solvers with mesh motion on and off.  When mesh motion is on the cells advect with angular velocity $\Omega$.  For all runs $\Gam=5/3$, PLM $\theta =1.5$, \CFL\ is 0.5, radial boundaries are held fixed, and constrained transport is used.
 
 \begin{figure}
 \begin{center}
@@ -670,13 +670,47 @@ The grid has $N_r = 64$ and $N_\phi$ chosen to keep square cells. We test evolut
 	\includegraphics[width=0.5\textwidth]{figures/numerics/floop_hlld_fix.png} & \includegraphics[width=0.5\textwidth]{figures/numerics/floop_hlld_mov.png} 
 \end{tabular}
 \end{center}
-\caption{Magnetic field energy after one revolution in the field loop advection test.  The top row uses the HLL Riemann solver, the bottom uses HLLD.  The left column has a fixed grid while the right column uses a mesh moving at angular velocity $\Omega$.  All setups are evolved with constrained transport. The combination of HLLD with a moving mesh provides remarkable preservation of the magnetic field.  \figlabel{floop}}
+\caption{Lab frame magnetic field $B^2$ after one revolution in the field loop advection test.  The top row uses the HLL Riemann solver, the bottom uses HLLD.  The left column has a fixed grid while the right column uses a mesh moving at angular velocity $\Omega$.  All setups are evolved with constrained transport. The combination of HLLD with a moving mesh provides remarkable preservation of the magnetic field.  \figlabel{floop}}
 \end{figure}
 
 \fig{floop} shows the magnetic energy density $B^2$ after one orbit for all 4 runs.  With no mesh motion and HLL Riemann solver the loop develops large asymmetric fluctuations after only a single orbit.  Mesh motion symmetrizes the fluctuations but a significant discrepancy remains.  The HLLD solver does a much better job of preserving the magnetic field without dissipation, when combined with mesh motion the field loop is virtually distortion free.
 
 %\subsection{Magnetic Blastwave}
 \subsection{Linear MRI}
+
+To test fully magnetohydrodynamic evolution we examine the linear growth of the magnetorotational instability (MRI) following the setup of \citet{Flock10}.  This is a Newtonian test, to compare with existing calculations.  
+
+We perform the calculation in a Schwarzschild spacetime of mass $M$ in Kerr-Schild coordinates, neglecting vertical gravitational fields.  The line element is:
+\begin{equation}
+	ds^2 = -dt^2 + dr^2 + r^2d\phi^2 + dz^2 + \frac{2M}{r}\left(dt + dr\right)^2\ .
+\end{equation}
+The three dimensional domain spans $r\in[R_0, 4R_0]$, $\phi \in [0, \pi/3]$, $z\in[-R_0/2, R_0/2]$, where $R_0 = 10^6M$ to put the calculation in the Newtonian regime.  We use a grid of size $N_r = 128$, $N_z=64$, and $N_\phi$ chosen locally to keep cells cubic.  Boundary conditions are periodic in $\phi$ and $z$ and zero gradient in $r$.
+
+The initial condition is a uniform disk of density $\rho=1$ and sound speed $c_s = 10^{-1} r \Om_K$, where $\Om_K = \sqrt{M/r^3}$ is the local Keplerian frequency. This disk then has a constant Mach number $\mathcal{M} = 10$.  The azimuthal velocity $v^\phi = \Om_K$, and the radial and vertical velocities are seeded with random noise $ v^r = \delta v^r$, $v^z=\delta v^z$, where $\delta v^i$ are uniform random numbers of with amplitude $10^{-3} \sqrt{M/R_0}$.  The magnetic field is chosen so that a particular MRI mode $n$ grows fastest, $B^z = 0.05513 n^{-1} \sqrt{M/R_0}$ and $B^r = B^\phi = 0$.  The magnetic field and velocity fluctuations are only applied between $r=2R_0$ and $r=3R_0$, otherwise both are zero.  We choose $n=4$ for this analysis.
+
+The disk is run for 10 orbits at $R_0$ using the HLLD Riemann solver and moving the mesh with average angular velocity of each annulus.  The \CFL\ is 0.2 and the PLM $\theta=1.5$.
+
+\begin{figure}
+\begin{center}
+	\includegraphics[width=\textwidth]{figures/numerics/flock_Bp.png}
+\end{center}
+\caption{Azimuthal magnetic field $B^{\hat{\phi}}$ in the linear MRI Flock test after 8 orbits at the inner radius.  The $n=4$ MRI mode has clearly been excited and is undergoing exponential growth.  This figure may be compared to Figure 5 of \citet{Flock10}. \figlabel{flock:Bp}}
+\end{figure}
+
+\fig{flock:Bp} shows the azimuthal magnetic field $B^{\hat{\phi}}$ after 8 orbits at $R_0$.  The $n=4$ mode has clearly been established and is undergoing exponential growth.  This particular variable and time was chosen to allow visual comparison with \citet{Flock10} (Figure 5).  We see a very symmetric and clean set of modes, similar to the result of their upwinded constrained transport calculation.  The amplitude of the magnetic field is also in agreement, once the $\sqrt{M/R_0}$ scaling factor is taken into account.
+
+\begin{figure}
+\begin{center}
+	\includegraphics[width=0.8\textwidth]{figures/numerics/flock_Br2.pdf}
+\end{center}
+\caption{\emph{Top panel:} Growth of average radial magnetic field energy $\langle B_r B^r\rangle$ in the linear MRI Flock test.  Disco data is in black crosses and the analytic prediction in grey with arbitrary normalization.  The magnetic energy grows at an exponential rate before approaching saturation, slightly slower than the analytic prediction. \emph{Bottom panel:} Numerical growth rate $\langle \gamma \rangle$, calculated as the numerical derivative of the top panel data. The \grdisco\ growth rate reaches a maximum of $0.8 \gamma_{\rm MRI}$.  \figlabel{flock:Br2}}
+\end{figure}
+
+The quantitative test is the calculation of the effective MRI growth rate $\langle \gamma \rangle$.  \citet{Flock10} give the ideal growth rate of the magnetic field, $B = B_0 \exp(\gamma_{\rm MRI} t)$, as $\gamma_{\rm MRI} = 0.75 \Omega$.  This should be an upper bound on the growth rate for any physical or numerical MRI development.
+
+ In the upper panel of \fig{flock:Br2} we plot the average radial magnetic energy $\langle B_r B^r\rangle$ from \grdisco\ at a cadence of one orbit.  For comparison we also plot the ideal energy growth rate $\exp(2 \gamma_{\rm MRI} t)$, using $\Omega = \Omega(r=2R_0)$ as this is the location of largest magnetic field growth.  We find as expected exponential growth of $\langle B_r B^r\rangle$ before saturation begins, but with a slightly smaller growth rate than the ideal prediction.  In the lower panel we give our numerical growth rate $\langle \gamma \rangle$, calculated as one half the numerical derivative of $\log \langle B_r B^r\rangle$ with respect to time.  After an initial transient the growth rate increases and reaches a maximum of $\sim 0.8 \gamma_{\rm MRI}$.  Although somewhat smaller than the numerical growth rates seen in \citet{Flock10}, this is in agreement with \citet{Duffell16}.
+
+Development of GRMHD in \grdisco\ is ongoing. The results shown here show great promise for the incorporation of GRMHD into a moving mesh framework and demonstrate the robustness of moving mesh GRHD.
 
 %%%%%%
 % Summary %
@@ -685,9 +719,9 @@ The grid has $N_r = 64$ and $N_\phi$ chosen to keep square cells. We test evolut
 \section{Summary}
 \sectlabel{summary}
 
-We have introduced \grdisco, a new three dimensional GRMHD code that utiliizes a moving, shearing mesh.  The mesh motion greatly lowers the numerical dissipation while allowing for significantly longer time steps.  We have demonstrated \grdisco's performance on a number of test problems which show its accuracy and the utility of its advanced Riemann solvers.  \grdisco is massively parallel and available freely online at \url{https://github.com/geoffryan/Disco.git}.
+We have introduced \grdisco, a new three dimensional GRMHD code that utiliizes a moving, shearing mesh.  The mesh motion greatly lowers the numerical dissipation while allowing for significantly longer time steps.  We have demonstrated \grdisco's performance on a number of test problems, emphasizing its performance on supersonic orbiting flows and its ability to dynamically capture steady thin accretion disks.  The MHD development of \grdisco\ is ongoing and shows great promise.  \grdisco is massively parallel and available freely online at \url{https://github.com/geoffryan/Disco.git}.
 
 \section{Chapter Acknowledgements} \sectlabel{acknowledgements}
 
-We thank Brian Farris for many fruitful conversations and his work on Newtonian \disco.  
+Computations were carried out using the Pleiades cluster at NASA Ames and on the Ria cluster at the Center for Cosmology and Particle Physics at New York University. We thank Brian Farris for many fruitful conversations and his work on Newtonian \disco.
 
